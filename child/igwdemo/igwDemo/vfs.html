@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实验室-VFS</title>
+<link href="css/base.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+</style>
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script src="js/public.js"></script>
+
+<script>
+var filename;
+var filesize;
+
+
+function getfile() {
+	document.getElementById("get_file").style.display="block";
+	document.getElementById("new_file").style.display="none";
+	
+	document.getElementById("getFile").className="menu_active"
+	document.getElementById("newFile").className="menu_normal";
+	testFileAtt();
+}
+function newfile() {
+	document.getElementById("get_file").style.display="none";
+	document.getElementById("new_file").style.display="block";
+	
+	document.getElementById("newFile").className="menu_active";
+	document.getElementById("getFile").className="menu_normal";
+	
+	document.getElementById('filename1').value='';
+	document.getElementById('data1').value='';
+}
+function openNewFilePop(v,s){
+	document.getElementById("new_file_pop").style.display="block";
+	
+	filesize=s;
+	//alert(v+" "+s);
+	document.getElementById("fileID").innerHTML=v;
+	document.getElementById("filesizeID").innerHTML=s+"B";
+	testRead(v);
+}
+function closeNewFilePop(){
+	document.getElementById("new_file_pop").style.display="none";
+}
+function fileInfo(){
+	document.getElementById("file_info").style.display="block";
+	document.getElementById("addfile_info").style.display="none";
+}
+function addFileInfo(){
+	document.getElementById("file_info").style.display="none";
+	document.getElementById("addfile_info").style.display="block";
+}
+    function onLoad(){
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+    
+    function onDeviceReady() {
+    	console.log("onDeviceReady()--->start()");
+    	test();
+    	console.log("onDeviceReady()--->end()");
+    }
+    
+    //测试
+	function test(){
+		console.log("test()--->start()");
+		//testGetDevice();
+		testFileAtt();
+    	console.log("test()--->end()");
+	}
+	function  testInit(){
+		console.log("testInit");
+		var path="/sdcard/MAM/vfs";
+		var key = "460022955301424";
+		var arg=[path,key];
+		 mam.navigator.vfs.vfsInit(onSuccess,onError,arg);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testInit---> info:"+info);
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testInit--->+info:" +info);
+    	}
+	
+	}
+   function	testWrite(){
+   		//document.getElementById('textarea').value = msg;
+   		//document.getElementById("list").innerHTML = "";
+	   	var filename=document.getElementById('filename1').value;
+	   	var fileContent=document.getElementById('data1').value;
+	   	if(!filename||!fileContent||filename.length==0||fileContent.length==0){
+	   		mam.navigator.notification.alert('内容不能为空', function(){},'提示');
+	   		return;
+	   	}
+	   	var chkStr;
+	   var chkObjs = document.getElementsByName("overWrite");
+        for(var i=0;i<chkObjs.length;i++){
+             if(chkObjs[i].checked){
+                  chkStr=chkObjs[i].value;
+                  break;
+             }
+         }
+	   
+	   	//alert(filename+" "+fileContent+" "+chkStr);
+	   	var isOverWrite=chkStr==1?true:false;
+	   	var arg=[filename,fileContent,isOverWrite];
+		mam.navigator.vfs.vfsWrite(onSuccess,onError,arg);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testWrite-->> info:"+info);
+       		getfile();
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testWrite-->+info:" +info);
+    	}
+   
+   
+   }
+   function testRead(v){
+   		filename=v;
+   		var arg=[filename];
+   		 mam.navigator.vfs.vfsRead(onSuccess,onError,arg);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testRead--> info:"+info);
+       		document.getElementById('info').value=info;
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testRead-->+info:" +info);
+    	}
+   
+   }
+	function testAppend(){
+		var fileContent=document.getElementById('testAppendID').value;
+   		var arg=[filename,fileContent];
+   		 mam.navigator.vfs.vfsAppend(onSuccess,onError,arg);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testAppend--> info:"+info);
+       		closeNewFilePop();
+       		fileInfo();
+       		document.getElementById('testAppendID').value='';
+       		testFileAtt();
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testAppend-->+info:" +info);
+    	}
+	}
+	
+	function testFileAtt(){
+   		 mam.navigator.vfs.vfsFileAtt(onSuccess,onError,[]);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testFileAtt--> info:"+info);
+     
+			var content='';
+			document.getElementById('get_file').innerHTML='';
+			for(var i=0;i<info.length;i++){
+				content+='<li onClick="openNewFilePop(\''+info[i].file+'\',\''+info[i].size+'\')"><span class="span_firstchild">'+info[i].file+'</span><span class="span_lastchild">'+info[i].size+'B'+'</span></li>';
+			}
+			document.getElementById('get_file').innerHTML=content;
+			
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testFileAtt-->+info:" +info);
+    	}
+	
+	
+	}
+	function testDelete(v){
+		 mam.navigator.vfs.vfsDelete(onSuccess,onError,[filename]);
+		//加载文件成功
+    	function onSuccess(info) {
+       		console.log("onSuccess() testDelete--> info:"+info);
+       		closeNewFilePop();
+       		testFileAtt();
+       		
+    	}
+
+		//加载文件失败
+    	function onError(info) {
+        	console.log("onError() testDelete-->+info:" +info);
+    	}
+	}
+	//// 2.向文件1中写内容background-color:#9999CC;
+	//vfsWrite("file1", "测试回车\n\ns是这样的", false);
+	//String data = vfsRead("file1");
+</script>
+
+</head>
+
+<body onload="onLoad();">
+<ul class="menu">
+	<li class="menu_active" onClick="getfile()" id="getFile">获取文件</li><li onClick="newfile()" id="newFile">新建文件</li>
+</ul>
+<ul class="list_icon" id="get_file">
+   	<!-- <li onClick="openNewFilePop('')"><span class="span_firstchild">文件名称</span><span class="span_lastchild">文件大小</span></li>
+    <li onClick="openNewFilePop('')"><span class="span_firstchild">文件名称</span><span class="span_lastchild">文件大小</span></li>
+    <li onClick="openNewFilePop('')"><span class="span_firstchild">文件名称</span><span class="span_lastchild">文件大小</span></li>
+    <li onClick="openNewFilePop('')"><span class="span_firstchild">文件名称</span><span class="span_lastchild">文件大小</span></li>
+	 -->
+</ul>
+<ul class="new_file" id="new_file"  style="display:none;">
+    <li><span class="new_file_name">文件名：</span><span><input class="fileNameinput" type="text" name="filename1" id="filename1" /></span></li>
+    <li><span>文件内容：</span><span><textarea name="data1" id="data1" class="fileInfo"></textarea></span></li>
+    <li><span>是否复写：</span><span><input type="radio" id="yes" name="overWrite" value="1"/><label for="yes" class="label"  >是</label><input type="radio" id="nay" name="overWrite" checked value="0"/><label for="nay" class="label">否</label></span></li>
+    <li><span></span><span><input type="submit" class="new_file_bt" onclick="testWrite()" value="创 建"/></span></li>
+</ul>
+<div class="new_file_pop" id="new_file_pop" style="display:none;">
+<ul class="file_box">
+    <li><input type="button" class="file_box_bt" value="返 回" onClick="closeNewFilePop()" /><input type="button" class="file_box_bt"value="删 除" onclick="testDelete(name)" /></li>
+    <li ><span class="span_firstchild" id="fileID">文件名称</span><span class="span_lastchild" id="filesizeID">文件大小</span></li>
+    <li><input type="button" class="file_box_bt2" value="内 容" onClick="fileInfo()" /><input type="button" class="file_box_bt2" value="追加内容" onClick="addFileInfo()" /></li>
+    <li id="file_info">
+    	<div class="file_info_box"><textarea class="file_info_textarea" name="info" id="info"></textarea></div>
+    </li>
+    <li id="addfile_info" style="display:none;">
+    	<div class="file_info_box">
+    	<textarea class="file_info_textarea" id="testAppendID"></textarea>
+        <input type="button" class="file_box_bt file_box_margintop" onclick="testAppend()" value="追 加"/>
+        </div>
+    </li>
+</ul>
+</div>
+
+</body>
+</html>

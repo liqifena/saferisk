@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>测试页（何）</title>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="cordova_plugins.js"></script>
+		<script type="text/javascript" src="cordova.js"></script>
+	</head>
+
+	<body>
+		
+		<input type="button" id="" value="扫描二维码" onclick="executeGoToScanPager()" />
+		
+
+		<script type="text/javascript">	
+		
+
+		var ready = false;
+		function onLoad(){     
+			document.addEventListener("deviceready", onDeviceReady, false);
+		}
+
+		 function onDeviceReady() {    
+				//设定标志位，到扫描二维码界面时用到这个标志位
+				ready = true;		
+			}
+	//到扫描界面
+	function executeGoToScanPager(){
+    	
+    	if(!ready){    		
+    		return;
+    	}
+		alert("00");
+    	//执行到这边表示cordova环境准备完成,在二维码扫描界面
+    	mam.navigator.forward.goToScanTwoDiemCode(successCallback,errorCallback);
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){    		
+			alert("11");
+    		document.getElementById('textarea').value = msg;
+       }    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		alert("11");
+			document.getElementById("list").innerHTML = "";
+    	} 
+    }
+		</script>
+	</body>
+
+</html>

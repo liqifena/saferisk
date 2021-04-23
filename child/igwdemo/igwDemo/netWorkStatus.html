@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta content="width=device-width,user-scalable=no" name="viewport">
+
+<title>实验室-(监听/获取)网络状态</title>
+<style type="text/css">
+<!--
+body {
+	background-color: #E8F6F7;
+	margin-left: 0px;
+	margin-top: 10px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<!--这边原来就使用了capture.css-->
+<link href="css/capture.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.STYLE1 {color: #FFFFFF;
+	font-size: 17px;
+	font-family: "黑体";
+}
+.bk {	border: 1px solid #0A7E81;
+}
+.bk {	border: 1px solid #99C3C4;
+}
+.STYLE7 {	color: #FFFFFF;
+	font-weight: bold;
+	font-size: 15px;
+	font-family: "黑体";
+}
+.STYLE9 {
+	font-size: 10pt
+}
+.STYLE10 {font-size: 12pt}
+.STYLE5 {	color: #053F40;
+	font-size: 24px;
+	font-family: "黑体";
+}
+.STYLE6 {	color: #053F40;
+	font-size: 16px;
+	font-family: "黑体";
+}
+.STYLE11 {
+	font-size: 16px;
+	font-family: "黑体";
+	color: #2D2D2D;
+}
+-->
+</style>
+<!--动画效果的javascript页面:由于动画效果名称为这个，所以就是这个名称-->
+<script src="js/capture.js" type="text/javascript"></script>
+<!--引入Cordova提供的js页面-->
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<!--引入这个事修改某些js变量的命名空间-->
+<script src="js/public.js"></script>
+<script type="text/javascript">
+	//标识cordova环境是否准备好,初始值为false
+	var deviceReady = false;
+	
+	//页面加载时执行
+    function onLoad(){
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+    
+    function onDeviceReady() {
+    	console.log("onDeviceReady()--->start()");
+  		deviceReady = true;
+  		//添加监听器[监听网络连上]
+  		document.addEventListener("online", onOnLine, false);
+  		
+  		//添加监听器[监听网络断开]
+  		document.addEventListener("offline", onOffLine, false);
+    	
+    	console.log("onDeviceReady()--->end()");
+    }
+
+	//获取网络状态
+	function getNetWorkStatus() {
+		console.log("getNetWorkStatus(),deviceReady:" + deviceReady);
+		if(!deviceReady){
+			return;
+		}
+		
+        var networkState = mam.navigator.connection.type;
+        var states = {};
+        var retStates = "";
+        states[Connection.UNKNOWN]  = 'Unknown connection';
+        states[Connection.ETHERNET] = 'Ethernet connection';
+        states[Connection.WIFI]     = 'WiFi connection';
+        states[Connection.CELL_2G]  = 'Cell 2G connection';
+        states[Connection.CELL_3G]  = 'Cell 3G connection';
+        states[Connection.CELL_4G]  = 'Cell 4G connection';
+        states[Connection.CELL]     = 'Cell generic connection';
+        states[Connection.NONE]     = 'No network connection';
+        console.log("getNetWorkStatus(),states[networkState]:" + states[networkState]);
+      	retStates = states[networkState];
+      	return retStates;
+    }
+    
+    //显示网络状态
+    function showNetWorkStatus(){
+    	var status = getNetWorkStatus();
+    	document.getElementById('divGetNetWorkStatus').innerHTML = status;
+    }
+    
+   
+    //清除网络状态
+    function clearNetWorkStatus(){
+    	document.getElementById('divGetNetWorkStatus').innerHTML = "";
+    }
+    
+    //网络连上时调用
+    function onOnLine(){
+    	var result = "";
+    	result = "网络连上..." + "<br/>" + getNetWorkStatus();
+    	document.getElementById('divListenerNetWorkStatus').innerHTML = result;
+    }
+    
+    //网络断开时调用
+    function onOffLine(){
+    	document.getElementById('divListenerNetWorkStatus').innerHTML = "网络断开...";
+    }
+    
+</script>
+</head>
+<body onload="onLoad()">
+<div id="TabbedPanels1" class="TabbedPanels">
+  <ul class="TabbedPanelsTabGroup" style="width:100%;">
+    <li class="TabbedPanelsTab STYLE9" tabindex="0" style="width:38%" onclick="clearNetWorkStatus()">
+      <table width="100%" height="24" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td height="28" align="center" valign="bottom"><span class="STYLE10">查看网络状态</span></td>
+        </tr>
+      </table>
+    </li>
+    <li class="TabbedPanelsTab STYLE9" tabindex="0" style="width:38%">
+    <table width="100%" height="24" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td height="28" align="center" valign="bottom"><span class="STYLE10">监听网络状态</span></td>
+        </tr>
+      </table></li>
+  </ul>
+  <div class="TabbedPanelsContentGroup">
+    <div class="TabbedPanelsContent"><br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" onclick="showNetWorkStatus()">
+        <tr>
+          <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="31%" height="60" align="right"><img src="images/netWorkStatus_Get.png" width="72" height="50" /></td>
+                <td width="69%"><span class="STYLE1">　获取网络状态</span></td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+      <!--显示录音操作结果的面板-->
+      <div>
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+              <tr>
+                <td height="30"><span class="STYLE5">网络状态</span></td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+              <tr>
+                <td height="30">
+                	<span class="STYLE6" id="divGetNetWorkStatus"></span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+      </table>
+      </div>
+      
+      <br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" >
+        <tr>
+          <td height="30" align="right"><table width="120" border="0" cellspacing="0" cellpadding="0" onclick="clearNetWorkStatus()">
+              <tr>
+                <td height="46" align="center" bgcolor="#0A7E81">
+                	<span class="STYLE7">清除</span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+    </div>
+    <div class="TabbedPanelsContent"><br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" onclick="executeCaptureVideo()">
+        <tr>
+          <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="31%" height="60" align="right"><img src="images/netWorkStatus_Listener.png" alt="" width="72" height="50" /></td>
+                <td width="69%"><span class="STYLE1">请切换网络后，查看网络状态</span></td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+      <!--执行正常时显示此面板信息-->
+      <div>
+        <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+          <tr>
+            <td height="50">&nbsp;</td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+                <tr>
+                  <td height="90" valign="middle">
+                  	<table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                        	<span class="STYLE11" id="divListenerNetWorkStatus">切换网络后，网络的状态在这显示...</span>
+                        </td>
+                      </tr>
+                    </table>
+                   </td>
+                </tr>
+            </table></td>
+          </tr>
+          <tr>
+            <td height="50">&nbsp;</td>
+          </tr>
+        </table>
+      </div>
+      </div>
+  </div>
+</div>
+<script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+</script>
+</body>
+</html>

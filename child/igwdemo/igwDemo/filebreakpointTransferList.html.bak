@@ -1,0 +1,407 @@
+<html>
+<head>
+<meta content="width=device-width,user-scalable=no" name="viewport">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>实验室-文件上传</title>
+
+<style type="text/css">
+<!--
+.STYLE1 {
+	color: #FFFFFF;
+	font-size: 17px;
+	font-family: "黑体";
+}
+.STYLE2 {
+	color: #FFFFFF;
+	font-family: "黑体";
+	font-size: 20px;
+}
+-->
+</style>
+<link href="css/css.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+body {
+	background-color: #E8F6F7;
+	margin-left: 0px;
+	margin-top: 10px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/uploadFjxx.js"></script>
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script src="js/public.js"></script>
+<script>
+	var ready = false;
+	
+//标志位[设成全局变量]:用于判断是否正在上传的过程中
+	var isUploading = false;
+	
+	var timer = null;
+	
+	var isstart = false;
+	
+	    //更新进度	
+	function loading(v){
+	document.getElementById('b').style.width =  v*2+'px';
+    document.getElementById('pre').innerHTML = v+'%';
+	
+}
+
+	function resetloading(){
+	document.getElementById('b').style.width =  0*2+'px';
+    document.getElementById('pre').innerHTML = 0+'%';
+	
+}
+	
+    function onLoad(){
+		init();
+        document.addEventListener("deviceready", onDeviceReady, false);
+    	console.log("onLoad()");
+    }
+    
+    function onDeviceReady() {
+    	console.log("onDeviceReady()-->start");
+    	//设定标志位，到扫描二维码界面时用到这个标志位
+    	ready = true;
+		console.log("onDeviceReady()--end");
+    }
+
+	//初始化读取文件信息
+	function init() {
+		//取数据
+	var data = {
+		bic:'getFile'
+	};
+		mam.navigator.ajax.getJSON('appcode_SYS13',data,'getJSON', successCallback);
+
+		//$.ajax( {
+		//	type : "post",
+		//	url : "getFile.action",
+		//	success : function(d) {
+		//	var ret = eval("(" + d + ")");//JSON.parse(d);
+		//	var ret1 = ret._ajax_op_flag;
+		//	var filevalue = "";
+		//	alert(ret1);
+		//	if (ret1 == "success") {
+		//		$.each(ret.fileName, function(i, v) {
+		//			//				alert(v);
+		//				filevalue += "<a href='download.action?fileName="+v+"'>" + v
+		//						+ "</br>";
+		//						
+		//			})
+		//		$("#fileDown").html(filevalue);
+
+//			}
+
+//		},
+//		error : function() {
+//			alert("数据异常!");
+//		}
+//		});
+	}
+	function successCallback(v)
+	{
+		alert("successCallback");
+		var json = JSON.stringify(v);
+		alert("getJson插件调用成功: "+json);
+	}	
+
+
+
+	
+   	
+
+	
+
+	
+	//执行发送文件操作
+	function executeSend(){
+		var filePath = "";
+		//filePath = "/sdcard/zhouxuesong/reader.txt";
+		//filePath = "/sdcard/zhouxuesong/ibm_driver_install.zip";
+		filePath = document.getElementById('file').value;
+		console.log("executeSend()--filePath:" + filePath);
+		if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+    	
+    	//满足条件表示正在执行上传，如果在上传过程中时用户还在点击上传，则不进行上传操作
+    	//下面代码是避免多次点击上传多个文件
+    	if(isUploading){
+    		console.log("executeSend() is uploading,return");
+    		return;
+    	}
+    	
+		if(filePath == ""){
+		    document.getElementById('isok').innerHTML = "请选择要上传的文件";
+		    return;
+		}
+	    isUploading = true;
+		document.getElementById('isok').innerHTML = "正在上传...";
+        timer =  setInterval('progress()',200);
+		filePath = document.getElementById('file').value;
+    	//navigator.dlfilebreakpointtransfer.fileUpload(successCallback,errorCallback,filePath);
+		alert('建设中,此处仅做参考');
+		mam.navigator.appupload.appServerUpload(successCallback, errorCallback,"appcode_SYS13","upload", filePath, "");
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    	clearInterval(timer);
+         isstart = false;
+		 document.getElementById('contron').innerHTML = "开始"
+    	if(msg == 100){
+    	     document.getElementById('isok').innerHTML = "服务器已存在此文件";
+    	
+    	} else {
+    	    document.getElementById('isok').innerHTML = "文件上传成功";
+    	
+    	}
+    		console.log("successCallback() msg:" + msg);
+    		isUploading = false;
+    		showOrHideIsUploadingMsg();
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(dlFileTransferError){
+    	   //var errorCode = dlFileTransferError.code;
+    		//返回错误码对象
+    		clearInterval(timer);
+    	     isstart = false;
+		     document.getElementById('contron').innerHTML = "开始"
+		     resetloading();
+    		if(dlFileTransferError.code == 6){
+    		document.getElementById('isok').innerHTML = "暂停成功"
+    		} else if(dlFileTransferError.code == 1){
+    		document.getElementById('isok').innerHTML = "文件不存在"
+    		} else {
+    		document.getElementById('isok').innerHTML = "文件上传失败";    	
+    		}
+    		isUploading = false;
+    		showOrHideIsUploadingMsg();
+    		//console.log("errorCallback()dlFileTransferError.code :" + errorCode);
+
+    	}
+	}
+	
+	
+	
+	 function startupload(){
+
+    	if(isstart){
+    	document.getElementById('contron').innerHTML = "开始"
+        mam.navigator.dlfilebreakpointtransfer.pause(successCallback,null);
+   
+       	function successCallback(msg){
+    	}
+    	
+    	function errorCallback(msg){
+    	}
+    	isstart = false;
+    	} else {
+    	executeSend();
+    	document.getElementById('contron').innerHTML = "暂停"
+    	 isstart = true;
+    	}
+   }
+   
+   function progress(){
+   	
+   	   mam.navigator.dlfilebreakpointtransfer.progress(successCallback,null);
+   
+       	function successCallback(msg){
+       	loading(msg);
+    	}
+    	
+    	function errorCallback(msg){
+    	}
+   }
+	
+	
+	
+	function executeClear(){
+	if(!isUploading){
+			document.getElementById('file').value = "";
+			document.getElementById('isok').innerHTML = "";
+		}else{
+			//不执行任何操作
+		}
+		//内部有isUploading判断，不受上面if/else影响
+		showOrHideIsUploadingMsg();   
+	}
+	
+		//如果用户正在执行上传，此时点击清除按钮时显示的消息
+	function showOrHideIsUploadingMsg(){
+		//全局变量，标识当前状态，当前为文件正在上传状态
+		if(isUploading){
+			//如果当前正在上传状态，并且此对象没显示，设定此对象为显示状态
+			if("none" == document.getElementById('error').style.display){
+				document.getElementById('error').style.display = "block";
+			}
+		}else{
+			//当前为不在上传状态，并且此对象设定为显示，设定此对象为隐藏状态
+			if("block" == document.getElementById('error').style.display){
+				document.getElementById('error').style.display = "none";
+			}
+		}
+	}
+	
+	
+	
+	
+	//由于在Android平台上和在IOS平台上打开文件执行的不一样，所以在这边加上了具体的平台判断
+	//IOS:调用照片库，返回文件
+	//Android:调用自己写插件，通过自己写的插件，调用自己写的原生浏览文件的一个Activity浏览文件返回指定路径
+	function executeOpenFile(){
+		console.log(" executeOpenFile()-->start");
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+    	
+    	resetloading();
+		document.getElementById('contron').innerHTML = "开始"
+        mam.navigator.dlfilebreakpointtransfer.pause(successCallback,null);
+   
+       	function successCallback(msg){
+    	}
+    	
+    	function errorCallback(msg){
+    	}
+    	isstart = false;
+		
+		//打开文件时清除掉其中的内容
+		document.getElementById('isok').innerHTML = "";
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+			executeOpenFileByIOS();
+		}else if("Android" == devicePlatform){
+			executeOpenFileByAndroid();
+		}else{
+			console.log("invaiate platform");
+		}
+	}
+		
+	//为Android平台时打开文件执行的操作[自己写的插件，打开自己写的本地应用此应用显示系统文件信息，用户选择后带回文件信息]
+	function executeOpenFileByAndroid(){
+		console.log("executeOpenFileByAndroid()-->start");
+		mam.navigator.forward.goToFileExplorer(successCallback,null,DLForwardConstants.FileExplorer.ACTION_BREAK_POINT_FILE_UPLOAD);
+    	function successCallback(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+	
+	//为IOS平台时，执行打开文件时操作
+	function executeOpenFileByIOS(){
+		console.log("executeOpenFileByIOS()-->start");
+		mam.navigator.camera.getPicture( uploadPhoto,
+                                     errorCallback,
+                                     { quality: 50,destinationType: mam.navigator.camera.DestinationType.FILE_URI,sourceType: mam.navigator.camera.PictureSourceType.PHOTOLIBRARY }
+                                    );
+		function uploadPhoto(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+	
+
+</script>
+
+
+<style>
+.a{background:#fff;border:1px solid #ccc; width:200px;height:20px;margin-left:50px;margin-top:30px;}
+.b{background:#ccc;height:20px;width:0px;}
+</style>
+
+
+
+
+
+</head>
+<body onload="onLoad();">
+<form>
+<table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" onClick="executeOpenFile()">
+  <tr>
+    <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="26%" height="60" align="right"><img src="images/file.png" width="40" height="52"></td>
+        <td width="74%"><span class="STYLE1">　请选择要上传的文件</span></td>
+      </tr>
+          </table></td>
+  </tr>
+</table>
+
+
+
+<br>
+
+
+
+<table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="50"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td width="30"><table width="30" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td height="30" align="center" background="images/round.png"><span class="STYLE2">1</span></td>
+          </tr>
+        </table></td>
+        
+        <td width="20">&nbsp;</td>
+      </tr>
+    </table></td>
+    <td width="77%"><label>
+      <input name="file" type="text" class="bk" id="file" size="30" readonly="true">
+    </label></td>
+    <td width="15%"><img src="images/X.png" width="30" height="30" onClick="executeClear();"></td>
+  </tr>
+</table>
+
+<!--状态div-->
+
+<div id="a" class="a"><div id="b" class="b"></div></div>
+<div id="pre" name="pre" style="color:#000000; height:50px; width:100%; text-align:center; font-size:15px; font-weight:bold;"></div>
+
+<!--文件下载 start-->
+
+<div id="fileDown" name="pre" style="color:#000000; height:50px; width:100%; text-align:center; font-size:15px; font-weight:bold;"></div>
+<!--文件下载 end-->
+
+<div id="isok" name="isok" style="color:#aabb00; height:100px; width:100%; text-align:center; line-height:200px; font-size:32px; font-weight:bold;"></div>
+<br>
+<br>
+
+
+
+<center>
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="position:absolute; bottom:0px;" onClick="startupload()">
+  <tr>
+    <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="50%" align="right"><img src="images/find.png" width="72" height="50" ></td>
+        <td width="50%" id="contron"><span class="STYLE1">开始</span></td>
+      </tr>
+    </table></td>
+  </tr>
+</table><div style=" opacity:0.0">
+</div>
+</form>
+</center>
+<p>&nbsp;</p>
+</body>
+</html>

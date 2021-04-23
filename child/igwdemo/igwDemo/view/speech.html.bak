@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>语音识别</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html;">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+ 
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+	<script src="../js/vconsole.min.js"></script>
+
+    <script type="text/javascript">
+	var vConsole = new VConsole();
+
+/**
+
+cordova环境准备
+
+**/
+var mam = {navigator:navigator};
+//标识cordova环境是否准备好,初始值为false
+var deviceReady = false;
+//页面加载时执行
+function onLoad(){
+	document.addEventListener("deviceready", onDeviceReady, false);
+	onDeviceReady();
+}
+/**
+
+	cordova环境准备  加载完毕
+
+**/
+function onDeviceReady() {
+	deviceReady = true;
+  //  console.log("cordova加载完毕！");
+}
+
+
+/**
+
+	微应用跳转
+	参数说明：
+		appCode				目标应用 应用编码 
+
+**/
+		
+function microApp()
+{
+	if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			console.log('执行到这边表示cordova环境没有准备好');
+			return;
+		}
+	alert('安装 全流程监控 应用');
+	try{	
+	mam.navigator.go.microApp(successCallback,errorCallback,'SNINTQLCJK');
+	}catch(ex)
+	{
+		console.log("try: "+ex.message);
+	}	
+}
+
+/**
+	成功 回调
+	参数说明：
+		successCallback		成功回调	"code":0 成功	-2 应用不存在
+**/
+function successCallback(obj)
+{
+	console.log(JSON.stringify(obj));
+}
+/**
+	失败 回调
+	参数说明：
+		errorCallback		失败回调	"code":-1 参数错误 -3 内部错误(errorcallback)
+**/
+function errorCallback(obj)
+{
+	mam.navigator.go.microApp(successCallback,errorCallback,'SNINTQLCJK');
+}
+
+
+
+/**
+	蓝牙
+**/
+function initialize()
+{
+	var params={"request":true,"statusReceiver":false,"restoreKey":"bluetoothleplugin"};
+	mam.navigator.bluetooth.initialize(blSuccessCallback,params);
+}
+
+function startScan()
+{
+	var params={
+  "services": [
+    "180D",
+    "180F"
+  ],
+  "allowDuplicates": true,
+  "scanMode": bluetoothle.SCAN_MODE_LOW_LATENCY,
+  "matchMode": bluetoothle.MATCH_MODE_AGGRESSIVE,
+  "matchNum": bluetoothle.MATCH_NUM_MAX_ADVERTISEMENT,
+  "callbackType": bluetoothle.CALLBACK_TYPE_ALL_MATCHES,
+};
+	mam.navigator.bluetooth.initialize(blSuccessCallback,blerrorCallback,params);
+}
+
+
+function blSuccessCallback(obj)
+{
+	console.log(JSON.stringify(obj));
+}
+function blerrorCallback(obj)
+{
+	console.log(JSON.stringify(obj));
+}
+ </script>
+</head>
+<body onload="onLoad()">
+	<br>
+<span>*********  语音识别   ************<span><br>	
+	<input type='button' onclick='microApp()' value='语音识别'></input>	   
+<br>
+
+
+<span>*********  蓝牙   ************<span><br>	
+	<input type='button' onclick='initialize()' value='初始化'></input></br></br>  
+<!--<input type='button' onclick='initialize()' value='启用'></input></br></br>
+<input type='button' onclick='initialize()' value='停用'></input></br></br>
+<input type='button' onclick='initialize()' value='获取适配器信'></input></br></br>-->
+<input type='button' onclick='startScan()' value='开始扫描'></input></br></br>
+<input type='button' onclick='stopScan()' value='停止扫描'></input></br></br>
+<input type='button' onclick='connect()' value='连接'></input></br></br>
+<input type='button' onclick='reconnect()' value='断开'></input></br></br>
+
+<br>
+
+
+
+	<br>
+	<br>
+<br>
+
+
+
+
+
+
+</body>
+</html>
+
+
+

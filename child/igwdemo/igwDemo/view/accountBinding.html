@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<!--<link rel="stylesheet" type="text/css" href="css/mam.css" />-->
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>消息中心</title>
+<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+
+<style type="text/css">
+
+
+</style>
+</head>
+<body>
+<button type="button"  onclick="button1()">跳转管理界面</button>
+
+<button type="button"  onclick="button2()">绑定户号</button>
+
+<button type="button"  onclick="button3()">获取已绑定的户号</button></body>
+<script type="text/javascript">  
+
+
+
+
+
+
+
+function button1()
+{
+ mam.navigator.accountsys.dumpToManager("11112460",null,null);
+}
+
+function button2()
+{
+  mam.navigator.accountsys.ModOrAddAccount("11112460","321","holle2","yes",null,null);
+}
+
+function button3()
+{
+  mam.navigator.accountsys.getAppAccountList("11112460",succ_result,null);
+}
+
+function succ_result(obj){
+alert("------------"+obj);
+
+}
+
+</script> 
+
+</html>

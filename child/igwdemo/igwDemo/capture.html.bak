@@ -1,0 +1,478 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta content="width=device-width,user-scalable=no" name="viewport">
+
+<title>实验室-(音/视)频录制</title>
+<style type="text/css">
+<!--
+body {
+	background-color: #E8F6F7;
+	margin-left: 0px;
+	margin-top: 10px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<link href="css/capture.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.STYLE1 {color: #FFFFFF;
+	font-size: 17px;
+	font-family: "黑体";
+}
+.bk {	border: 1px solid #0A7E81;
+}
+.bk {	border: 1px solid #99C3C4;
+}
+.STYLE7 {	color: #FFFFFF;
+	font-weight: bold;
+	font-size: 15px;
+	font-family: "黑体";
+}
+.STYLE8 {color: #FFFFFF}
+.STYLE9 {
+	font-size: 10pt
+}
+.STYLE10 {font-size: 12pt}
+.STYLE5 {	color: #053F40;
+	font-size: 24px;
+	font-family: "黑体";
+}
+.STYLE6 {	color: #053F40;
+	font-size: 16px;
+	font-family: "黑体";
+}
+-->
+</style>
+<!--动画效果的javascript页面-->
+<script src="js/capture.js" type="text/javascript"></script>
+<!--引入Cordova提供的js页面-->
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+<script src="js/public.js"></script>
+	<script src="js/vconsole.min.js"></script>
+    <script type="text/javascript">
+
+
+	var vConsole = new VConsole();
+
+
+	//标志变量，根据此变量判断cordova环境是否准备好
+	var deviceReady = false;
+	
+	function onLoad(){
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+    
+    function onDeviceReady() {
+    	console.log("onDeviceReady()--->start()");
+    	deviceReady = true;
+    	console.log("onDeviceReady()--->end()");
+    }
+	
+	//执行录制音频
+	function executeCaptureAudio(){
+		console.log("executeCaptureAudio()--->start()");
+		if(!deviceReady){
+			return;
+		}
+		
+		//设定操作参数
+		//limit:捕获操作的次数[此值设置成>=1的值,此值默认取值为1]
+		//duration:[此属性的值仅对捕获视频有用,这边是捕获音频]
+		var captureAudioOptions = { limit:1};
+		
+		//执行捕获音频的操作
+		mam.navigator.device.capture.captureAudio(captureSuccess, captureError,captureAudioOptions);
+		
+		//方法名称:执行上面的"captureAudio()"方法后执行成功的回调操作
+		//参数名称:mediaFiles
+		//参数类型:MediaFile[],是MediaFile类型数组，用户在前面的参数captureAudioOptions中limit的属性设置标识
+		//
+		function captureSuccess(mediaFiles){
+			//获取数长度
+			var length = mediaFiles.length;
+			var i = 0;
+			var mediaFile;
+			var path;
+			//定义结果字符串
+			var result = "操作执行成功,音频存放路径:<br/>";
+			for (i = 0;i < length; i ++) {
+				mediaFile = mediaFiles[i];
+        		path = mediaFile.fullPath + "<br/>";
+        		result = result + path;
+        		//console.log("captureSuccess() path:" + path);
+    		}
+    		console.log("captureSuccess() result:" + result);
+			showCaptureAudioSuccess(result);
+		}
+		
+		//方法名称:执行上面的"captureAudio()"方法后执行失败的回调操作
+		//参数类型:CaptureError
+		//参数对象属性:code
+		//参数属性取值:CaptureError.X常量值
+		//  CaptureError.CAPTURE_INTERNAL_ERR:
+		function captureError(captureError){
+			var errorCode = captureError.code;
+			//console.log("captureError(),errorCode:" + errorCode);
+			var result = processErrorCode(captureError);
+			console.log("captureError() result:" + result);
+			showCaptureAudioError(result);
+		}
+	}
+	
+	
+	//音频录制执行成功回调
+	//divCaptureAudioSuccessResult:面板设定成显示属性
+	//divCaptureAudioErrorResult:面板设定成隐藏属性
+	//divCaptureAudioSuccessMsg:其中为路径信息
+	//divCaptureAudioErrorMsg:错误信息设定为空
+	//result:string类型参数，存放捕获成功的路径信息
+	function showCaptureAudioSuccess(result){
+		document.getElementById('divCaptureAudioSuccessResult').style.display = "block";
+		document.getElementById('divCaptureAudioErrorResult').style.display = "none";
+		document.getElementById('divCaptureAudioSuccessMsg').innerHTML = result;
+		document.getElementById('divCaptureAudioErrorMsg').innerHTML = "";
+	}
+	
+	function showCaptureAudioError(result){
+		document.getElementById('divCaptureAudioSuccessResult').style.display = "none";
+		document.getElementById('divCaptureAudioErrorResult').style.display = "block";
+		document.getElementById('divCaptureAudioSuccessMsg').innerHTML = "";
+		document.getElementById('divCaptureAudioErrorMsg').innerHTML = result;
+	}
+	
+	function initCaptureAudioInfo(){
+		
+	}
+	
+	function clearCaptureAudioInfo(){
+		document.getElementById('divCaptureAudioSuccessMsg').innerHTML = "";
+		document.getElementById('divCaptureAudioErrorMsg').innerHTML = "";
+		if("block" == document.getElementById('divCaptureAudioErrorResult').style.display){
+			//错误标题隐藏
+			document.getElementById('divCaptureAudioErrorResult').style.display = "none";
+			//正常标题显示
+			document.getElementById('divCaptureAudioSuccessResult').style.display = "block";
+		}
+	}
+	
+	//清除音频录制返回的结果
+	function clearCaptureVideoResult(){
+		document.getElementById('divSavaVideoResult').innerHTML = '';
+	}
+	
+	//执行视频录制
+	function executeCaptureVideo(){
+		console.log("executeCaptureVideo()--->start()");
+		//cordova环境是否准备好，如未准备好，执行不了退出
+		if(!deviceReady){
+			return;
+		}
+		
+		//duration:android或IOS对此属性的值不支持
+		//mode:android或IOS对此属性的值不支持
+		//limit:执行录制的次数[此值为有效值为>=1]
+		//前提条件:
+		// android:符合特征的Action存在
+		// IOS:
+		var captureVideoOptions = { limit: 1 };
+		
+		//captureSuccess:函数指针[执行成功后的回调函数]
+		//captureError:函数指针[执行失败后的回调函数]
+		mam.navigator.device.capture.captureVideo(captureSuccess, captureError, captureVideoOptions);
+		
+		//方法名称:执行上面的"captureAudio()"方法后执行成功的回调操作
+		//参数名称:mediaFiles
+		//参数类型:MediaFile[],是MediaFile类型数组，MediaFile类型对象
+		function captureSuccess(mediaFiles){
+			//获取数长度
+			var length = mediaFiles.length;
+			var i = 0;
+			var mediaFile;
+			var path;
+			//定义结果字符串
+			var result = "操作执行成功,音频存放路径:<br/>";
+			for (i = 0;i < length; i ++) {
+				mediaFile = mediaFiles[i];
+        		path = mediaFile.fullPath + "<br/>";
+        		result = result + path;
+        		//console.log("captureSuccess() path:" + path);
+    		}
+    		console.log("captureSuccess() result:" + result);
+			showCaptureVideoSuccess(result);
+		}
+		
+		//方法名称:执行上面的"captureAudio()"方法后执行失败的回调操作
+		//参数类型:CaptureError
+		//参数对象属性:code
+		//参数属性取值:CaptureError.X常量值
+		//  CaptureError.CAPTURE_INTERNAL_ERR:
+		function captureError(captureError){
+			var errorCode = captureError.code;
+			//console.log("captureError(),errorCode:" + errorCode);
+			var result = processErrorCode(captureError);
+			console.log("captureError() result:" + result);
+			showCaptureVideoError(result);
+		}
+		
+	}
+	
+	function showCaptureVideoSuccess(result){
+		document.getElementById('divCaptureVideoSuccessResult').style.display = "block";
+		document.getElementById('divCaptureVideoErrorResult').style.display = "none";
+		document.getElementById('divCaptureVideoSuccessMsg').innerHTML = result;
+		document.getElementById('divCaptureVideoErrorMsg').innerHTML = "";
+	}
+	
+	function showCaptureVideoError(result){
+		document.getElementById('divCaptureVideoSuccessResult').style.display = "none";
+		document.getElementById('divCaptureVideoErrorResult').style.display = "block";
+		document.getElementById('divCaptureVideoSuccessMsg').innerHTML = "";
+		document.getElementById('divCaptureVideoErrorMsg').innerHTML = result;
+	}
+	
+	function initCaptureVideoInfo(){
+		
+	}
+	
+	function clearCaptureVideoInfo(){
+		document.getElementById('divCaptureVideoSuccessMsg').innerHTML = "";
+		document.getElementById('divCaptureVideoErrorMsg').innerHTML = "";
+		//判断错误标题是否显示，如果为显示的，把错误标题设定成隐藏，正常标题显示
+		if("block" == document.getElementById('divCaptureVideoErrorResult').style.display){
+			//错误标题隐藏
+			document.getElementById('divCaptureVideoErrorResult').style.display = "none";
+			//正常标题显示
+			document.getElementById('divCaptureVideoSuccessResult').style.display = "block";
+		}
+	}
+	
+	//清除音频录制返回的结果
+	function clearCaptureVideoResult(){
+		document.getElementById('divSavaVideoResult').innerHTML = '';
+	}
+	
+	//处理错误信息[根据给定的错误码，界面上显示错误信息]
+	function processErrorCode(captureError){
+		var errorMsg = "";
+		if(null == captureError){
+			return errorMsg;
+		}
+		//获取错误码
+		var errorCode = captureError.code;
+		
+		console.log("processErrorCode() errorCode:" + errorCode);
+		if(CaptureError.CAPTURE_INTERNAL_ERR == errorCode){
+			errorMsg = "捕获录像或声音失败";
+		}else if(CaptureError.CAPTURE_APPLICATION_BUSY == errorCode){
+			errorMsg = "摄像应用或录音捕获应用当前被其它捕获请求服务";
+		}else if(CaptureError.CAPTURE_INVALID_ARGUMENT == errorCode){
+			errorMsg = "使用无效的api";
+		}else if(CaptureError.CAPTURE_NO_MEDIA_FILES == errorCode){
+			errorMsg = "用户在录像或音频捕获界面没有执行任何操作直接退出/此系统中没有对应应用";
+		}else if(CaptureError.CAPTURE_NOT_SUPPORTED == errorCode){
+			errorMsg = "请求捕获操作没有被提供";
+		}else{
+			//上面任何错误都没有处理执行到这边
+			errorMsg = "";
+		}
+		return errorMsg;
+	}
+	
+	
+</script>
+
+</head>
+<body onload="onLoad()">
+<div id="TabbedPanels1" class="TabbedPanels">
+  <ul class="TabbedPanelsTabGroup" style="width:100%;">
+    <li class="TabbedPanelsTab STYLE9" tabindex="0" style="width:38%">
+      <table width="100%" height="24" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td height="28" align="center" valign="bottom"><span class="STYLE10">音频录制</span></td>
+        </tr>
+      </table>
+    </li>
+    <li class="TabbedPanelsTab STYLE9" tabindex="0" style="width:38%">
+    <table width="100%" height="24" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td height="28" align="center" valign="bottom"><span class="STYLE10">视频录制</span></td>
+        </tr>
+      </table></li>
+  </ul>
+  <div class="TabbedPanelsContentGroup">
+    <div class="TabbedPanelsContent"><br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" onclick="executeCaptureAudio()">
+        <tr>
+          <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="31%" height="60" align="right"><img src="images/capture_audio.png" width="72" height="50" /></td>
+                <td width="69%"><span class="STYLE1">　我要录音</span></td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+      <!--显示录音操作结果的面板-->
+      <div id="divCaptureAudioSuccessResult">
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+              <tr>
+                <td height="30"><span class="STYLE5">录音保存路径</span></td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+              <tr>
+                <td height="30">
+                	<span class="STYLE6" id="divCaptureAudioSuccessMsg"></span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+      </table>
+      </div>
+      
+      <div id="divCaptureAudioErrorResult" style="display:none">
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+              <tr>
+                <td height="30"><span class="STYLE5">错误信息</span></td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+              <tr>
+                <td height="30">
+                	<!--显示错误信息的容器-->
+                	<span class="STYLE6" id="divCaptureAudioErrorMsg">未知错误！</span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+      </table>
+      </div>
+      <br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" >
+        <tr>
+          <td height="30" align="right"><table width="120" border="0" cellspacing="0" cellpadding="0" onclick="clearCaptureAudioInfo()">
+              <tr>
+                <td height="46" align="center" bgcolor="#0A7E81">
+                	<span class="STYLE7">清除</span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+    </div>
+    <div class="TabbedPanelsContent"><br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" onclick="executeCaptureVideo()">
+        <tr>
+          <td bgcolor="#0A7E81"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="31%" height="60" align="right"><img src="images/capture_video.png" alt="" width="72" height="50" /></td>
+                <td width="69%"><span class="STYLE1">　我要录视频</span></td>
+              </tr>
+          </table></td>
+        </tr>
+      </table>
+      <!--执行正常时显示此面板信息-->
+      <div id="divCaptureVideoSuccessResult">
+        <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+          <tr>
+            <td height="50">&nbsp;</td>
+          </tr>
+          <tr>
+            <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td height="30"><span class="STYLE5">视频保存路径</span></td>
+                </tr>
+            </table></td>
+          </tr>
+          <tr>
+            <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+                <tr>
+                  <td height="30">
+                  	<span class="STYLE6" id="divCaptureVideoSuccessMsg"></span>
+                  </td>
+                </tr>
+            </table></td>
+          </tr>
+          <tr>
+            <td height="50">&nbsp;</td>
+          </tr>
+        </table>
+      </div>
+      <!--执行错误后显示此面板的信息-->
+      <div id="divCaptureVideoErrorResult" style="display:none">
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#D0E8EA">
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+              <tr>
+                <td height="30"><span class="STYLE5">错误信息</span></td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td><table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="bk">
+              <tr>
+                <td height="30">
+                	<span id="divCaptureVideoErrorMsg" class="STYLE6"> 　未知错误！</span>
+                </td>
+              </tr>
+          </table></td>
+        </tr>
+        <tr>
+          <td height="50">&nbsp;</td>
+        </tr>
+      </table>
+      </div>
+      <br />
+      <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+          <td height="30" align="right">
+          <table width="120" border="0" cellspacing="0" cellpadding="0" onclick="clearCaptureVideoInfo()">
+              <tr>
+                <td height="46" align="center" bgcolor="#0A7E81">
+                	<span class="STYLE7">清除</span>
+                </td>
+              </tr>
+          </table>
+         </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+</script>
+</body>
+</html>

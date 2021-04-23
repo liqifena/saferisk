@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>下载/打开</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html;">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+ 
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+	<script src="../js/vconsole.min.js"></script>
+
+    <script type="text/javascript">
+	var vConsole = new VConsole();
+
+/**
+
+cordova环境准备
+
+**/
+var mam = {navigator:navigator};
+//标识cordova环境是否准备好,初始值为false
+var deviceReady = false;
+//页面加载时执行
+function onLoad(){
+	document.addEventListener("deviceready", onDeviceReady, false);
+	onDeviceReady();
+}
+/**
+
+	cordova环境准备  加载完毕
+
+**/
+function onDeviceReady() {
+	deviceReady = true;
+  //  console.log("cordova加载完毕！");
+}
+
+
+
+/**
+
+	添加水印
+	参数说明：
+		successCallback		成功回调
+		errorCallback		失败回调
+		content				水印  （数据类型 字符串） 
+
+**/
+		
+function addWatermark()
+{
+	var content = '这是水印';
+	if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			console.log('执行到这边表示cordova环境没有准备好');
+			return;
+		}
+	console.log('addWatermark');
+	try{	
+	navigator.watermark.add(successCallback,errorCallback,content);
+	}catch(ex)
+	{
+		console.log("try: "+ex.message);
+	}	
+}
+
+/**
+
+	删除水印
+	参数说明：
+		successCallback		成功回调	"code":0 添加成功
+		errorCallback		失败回调	"code":1 添加失败
+		content				水印  （数据类型 字符串） 
+
+**/
+		
+function removeWatermark()
+{
+	if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			console.log('执行到这边表示cordova环境没有准备好');
+			return;
+		}
+	console.log('removeWatermark');
+	try{	
+	navigator.watermark.remove(successCallback,errorCallback);
+	}catch(ex)
+	{
+		console.log("try: "+ex.message);
+	}	
+}
+
+/**
+	水印 回调
+**/
+function successCallback(obj)
+{
+	alert(JSON.stringify(obj));
+}
+
+function errorCallback(obj)
+{
+	alert(JSON.stringify(obj));	
+}
+ </script>
+</head>
+<body onload="onLoad()">
+	<br>
+<span>*********  水印   ************<span><br>	
+	<input type='button' onclick='addWatermark()' value='增加水印'></input>	   
+    <input type='button' onclick='removeWatermark()' value='删除水印'></input>
+<br>
+
+
+	<br>
+	<br>
+<br>
+
+
+
+
+
+
+</body>
+</html>
+
+
+

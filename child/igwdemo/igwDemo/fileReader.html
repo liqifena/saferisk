@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FileReader Example</title>
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+        document.addEventListener("deviceready", onDeviceReady, false);
+
+        function onDeviceReady() {
+			alert("0");
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+        }
+
+        function gotFS(fileSystem) {
+			alert("1");
+            fileSystem.root.getFile("readme.txt", null, gotFileEntry, fail);
+        }
+
+        function gotFileEntry(fileEntry) {
+			alert("2");
+            fileEntry.file(gotFile, fail);
+        }
+
+        function gotFile(file){
+			alert("3");
+            readDataUrl(file);
+            readAsText(file);
+        }
+
+        function readDataUrl(file) {
+			alert("4");
+            var reader = new FileReader();
+            reader.onloadend = function(evt) {
+                console.log("Read as data URL");
+                console.log(evt.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function readAsText(file) {
+			alert("41");
+            var reader = new FileReader();
+            reader.onloadend = function(evt) {
+                console.log("Read as text");
+				alert("42"+evt.target.result);
+                console.log(evt.target.result);
+            };
+			alert("5");
+            reader.readAsText(file);
+        }
+
+        function fail(evt) {
+			alert("42");
+			alert(evt.target.error.code);
+            console.log(evt.target.error.code);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+//由于在Android平台上和在IOS平台上打开文件执行的不一样，所以在这边加上了具体的平台判断
+	//IOS:调用照片库，返回文件
+	//Android:调用自己写插件，通过自己写的插件，调用自己写的原生浏览文件的一个Activity浏览文件返回指定路径
+	function executeOpenFile(){
+		console.log(" executeOpenFile()-->start");
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+    	
+    	resetloading();
+		document.getElementById('contron').innerHTML = "开始"
+        mam.navigator.dlfilebreakpointtransfer.pause(successCallback,null);
+   
+       	function successCallback(msg){
+    	}
+    	
+    	function errorCallback(msg){
+    	}
+    	isstart = false;
+		
+		//打开文件时清除掉其中的内容
+		document.getElementById('isok').innerHTML = "";
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+			executeOpenFileByIOS();
+		}else if("Android" == devicePlatform){
+			executeOpenFileByAndroid();
+		}else{
+			console.log("invaiate platform");
+		}
+	}
+		
+	//为Android平台时打开文件执行的操作[自己写的插件，打开自己写的本地应用此应用显示系统文件信息，用户选择后带回文件信息]
+	function executeOpenFileByAndroid(){
+		console.log("executeOpenFileByAndroid()-->start");
+		mam.navigator.forward.goToFileExplorer(successCallback,null,DLForwardConstants.FileExplorer.ACTION_BREAK_POINT_FILE_UPLOAD);
+    	function successCallback(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+	
+	//为IOS平台时，执行打开文件时操作
+	function executeOpenFileByIOS(){
+		console.log("executeOpenFileByIOS()-->start");
+		mam.navigator.camera.getPicture( uploadPhoto,
+                                     errorCallback,
+                                     { quality: 50,destinationType: mam.navigator.camera.DestinationType.FILE_URI,sourceType: mam.navigator.camera.PictureSourceType.PHOTOLIBRARY }
+                                    );
+		function uploadPhoto(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+
+    </script>
+</head>
+<body>
+<h1>Example</h1>
+
+<input type="button" id="" value="test" onclick="onDeviceReady()" />
+<p>Read File</p>
+</body>
+</html>

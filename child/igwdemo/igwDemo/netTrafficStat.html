@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>实验室-网络流量统计</title>
+
+<meta content="width=device-width,user-scalable=no" name="viewport">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+<style type="text/css">
+body {
+	background-color: #E8F6F7;
+}
+.STYLE2 {
+	font-family: "黑体";
+	color: #FFFFFF;
+}
+.STYLE4 {color: #FFFFFF; font-weight: bold; font-family: "黑体"; font-size: 14pt; }
+.BK {
+	border: 1px solid #0A7E81;
+}
+.BK2 {
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: none;
+	border-left-style: solid;
+	border-top-color: #E8F6F7;
+	border-right-color: #E8F6F7;
+	border-left-color: #E8F6F7;
+}
+.BK3 {
+	border-bottom-width: 1px;
+	border-bottom-style: none;
+	border-bottom-color: #0A7E81;
+	border-top-width: 1px;
+	border-top-style: dashed;
+	border-top-color: #0A7E81;
+}
+.BK4 {
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-right-style: solid;
+	border-bottom-color: #E8F6F7;
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-right-width: 1px;
+	border-top-style: solid;
+	border-left-style: solid;
+	border-top-color: #E8F6F7;
+	border-left-color: #E8F6F7;
+	border-right-color: #E8F6F7;
+}
+</style>
+<!-- jquery -->
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script src="js/public.js"></script>
+<!-- core -->
+<script type="text/javascript" src="js/jqplot/jquery.jqplot.js"></script>
+<link rel="stylesheet" href="js/jqplot/jquery.jqplot.css" type="text/css"></link>
+<script  type="text/javascript" src="js/jqplot/jqplot.barRenderer.js"></script>
+<script  type="text/javascript" src="js/jqplot/jqplot.categoryAxisRenderer.js"></script>
+<script  type="text/javascript" src="js/jqplot/jqplot.canvasTextRenderer.js"></script>
+<script  type="text/javascript" src="js/jqplot/jqplot.canvasAxisLabelRenderer.js"></script>
+<script  type="text/javascript" src="js/jqplot/jqplot.cursor.js"></script> 
+<script  type="text/javascript" src="js/jqplot/jqplot.pointLabels.js"></script>
+
+<!--[if IE]><script language="javascript" type="text/javascript" src="../jqplot/excanvas.js"></script><![endif]-->
+
+<script>
+
+
+var ready = false;
+var  isFirstIn=false;
+var limitCount=5;
+var mType=2;
+var isSelectedWifi=false;
+var isSelectedMobile=false;
+var timerId;
+var restoreUseTime=60*1000;
+function onLoad(){ 
+    console.log("onLoad()--start");
+	isFirstIn=true;
+	document.addEventListener("deviceready", onDeviceReady, false);
+	console.log("onLoad()--end");
+}
+
+ function onDeviceReady() {
+      
+    	console.log("1onDeviceReady()-->start");
+    	ready = true;
+		
+		console.log("2onDeviceReady()--end");
+	getRencentMoreDayTraffic(2);
+	//	window.addEventListener("trafficupdated", onTrafficUpdated, false);	
+}
+
+function onTrafficUpdated(info){
+	console.log("trafficUpdated()-->info="+JSON.stringify(info));
+	successMoreCallback(info);
+
+}
+	function getOneDayTraffic(){
+    	console.log("getOneDayTraffic()-->start");
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		var day=$('#oneday').val();
+		console.log("getOneDayTraffic()-->oneday="+day);
+    	mam.navigator.netTrafficStat.getOneDayTraffic(successCallback,errorCallback,day);
+    	
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    		console.log("successCallback() msg:" + JSON.stringify(msg));
+			$('#textarea').val(JSON.stringify(msg));
+    		
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+			
+    	} 
+			
+    }
+	
+	function getOneMonthTraffic(){
+    	console.log("getOneDayTraffic()-->start");
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		var onemonthsatrt=$('#onemonthsatrt').val();
+		var onemonthend=$('#onemonthend').val();
+		console.log("getOneDayTraffic()-->onemonthsatrt="+onemonthsatrt+" onemonthend="+onemonthend);
+    	mam.navigator.netTrafficStat.getOneMonthTraffic(successCallback,errorCallback,onemonthsatrt,onemonthend);
+    	
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    		console.log("successCallback() msg:" + JSON.stringify(msg));
+			$('#textarea').val(JSON.stringify(msg));
+    		
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+			
+    	} 
+	}
+	function getRencentMoreDayTraffic(type){
+	
+    	console.log("getRencentMoreDayTraffic()-->start --type=="+type);
+		mType=type;
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//var daycount=$('#daycount').val();
+		//var endday=$('#endday').val();
+		var startDate=$('#startDate').val();
+		var endDate=$('#endDate').val();
+	
+		if(!isFirstIn){
+		
+			
+			if(!startDate||!endDate){
+				//alert("日期不能为空");
+				mam.navigator.notification.alert('日期不能为空', function(){},'提示');
+				return ;
+			}
+			
+			
+		}
+		isFirstIn=false;
+		
+		
+		if(type==2&&isSelectedWifi){
+			
+			return;
+		}
+		if(type==3&&isSelectedMobile){
+			
+			return;
+		}
+		
+		
+		if(startDate&&endDate){
+			var check=compareDate(startDate,endDate);
+			if(!check){
+				//alert("日期选择错误");
+				mam.navigator.notification.alert('日期选择错误', function(){},'提示');
+				return ;
+			}
+			if(1==check){
+			//	alert("支持5天以内查询");
+				mam.navigator.notification.alert('支持5天以内查询', function(){},'提示');
+				return ;
+			}
+		
+			if(2==type){
+				
+					document.getElementById("tr3").style.backgroundColor="#0A7E81";
+					document.getElementById("tr2").style.backgroundColor="#aaaaaa";
+					isSelectedWifi=true;
+					isSelectedMobile=false;
+			}else if(3==type){
+					document.getElementById("tr2").style.backgroundColor="#0A7E81";
+					document.getElementById("tr3").style.backgroundColor="#aaaaaa";
+					isSelectedMobile=true;
+					isSelectedWifi=false;
+				
+			}
+			if(timerId){
+				clearTimeout(timerId);
+			}
+			timerId=setTimeout(function() {
+                    
+                    document.getElementById("tr2").style.backgroundColor="#0A7E81";
+					document.getElementById("tr3").style.backgroundColor="#0A7E81";
+					isSelectedWifi=false;
+					isSelectedMobile=false;
+                }, restoreUseTime);
+		
+				
+					
+		}
+		
+		//var  daycount=4;
+		//var  endday="2014-05-15 00:00:09";
+		console.log("getRencentMoreDayTraffic()-->startDate="+startDate+" endDate="+endDate);
+    	mam.navigator.netTrafficStat.getRencentMoreDayTraffic(successMoreCallback,errorMoreCallback,startDate,endDate,type);
+    	
+    	
+	}
+	
+function compareDate(str1,str2){
+		
+		var arr1 = str1.split("-");  
+		var date1 = new Date(arr1[0],parseInt(arr1[1])-1,arr1[2]);  
+		  
+		//var str2 = "2009-8-4";  
+		var arr2 = str2.split("-");  
+		var date2 = new Date(arr2[0],parseInt(arr2[1])-1,arr2[2]);  
+		if(date1>=date2){
+			return 0;
+		}
+		var result=calcDays(date1,date2);
+		
+		if(result>=limitCount){
+			return 1;
+		}
+		return 2;
+}
+
+function calcDays(startDate,endDate){
+		
+		var result=Math.floor((endDate.getTime()-startDate.getTime())/(1000*3600*24));
+		return result;
+		
+}	
+	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+function successMoreCallback(msg){
+    	console.log("successCallback() msg:" + JSON.stringify(msg));
+		
+		
+		if(!msg||msg[0].length==0){
+			$('#chart1').html('没有数据');
+			return ;
+			
+		}
+			//$('#textarea').val(JSON.stringify(msg));
+		var line1 = msg[0]; //子统计1数据
+		var line2 = msg[1]; //子统计2数据
+			
+		var ticks =msg[2]; //['05-15', '05-14', '05-13', '05-12', '05-11'];
+		var title='';
+		if(2==mType){
+		    title="wifi流量统计图(Mb)";
+		}else if(3==mType){
+			title="移动流量统计图(Mb)";
+		}
+		
+		$('#chart1').html('');
+		var isAnim=!$.jqplot.use_excanvas;
+		//showJqplot();
+		//获取设备类型
+		var deviceModel = device.model;
+		
+		if(deviceModel.indexOf('HN3-U01')>-1){
+			//alert(deviceModel);
+			isAnim=false;
+		}
+	
+			var	 plot1 = $.jqplot('chart1', [line1,line2], {
+			 	title: title,
+			 	legend: {show: true, location: 'ne'}, //, ,xoffset: -3,yoffset: -3placement: 'outside' 提示工具栏--show：是否显示,location: 显示位置 (e:东,w:西,s:南,n:北,nw:西北,ne:东北,sw:西南,se:东南)
+				series: [{label: '下载'}, {label: '上传'}], //提示工具栏
+				animate: isAnim,//!$.jqplot.use_excanvas,
+				seriesDefaults: {
+					pointLabels: {show: true,formatString: '%.2f'},
+					showMarker: true, // 是否强调显示图中的数据节点
+					renderer: $.jqplot.BarRenderer, //使用柱状图表示
+					rendererOptions: {
+							barMargin: 15   //柱状体组之间间隔
+					}
+				},
+				 axes: {
+				 xaxis: {
+					 renderer: $.jqplot.CategoryAxisRenderer ,//x轴绘制方式
+						//label: 'X',
+						ticks: ticks,
+					    labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+						  tickOptions: {
+							  //fontFamily: 'Georgia',
+							  fontSize: '8px',
+							 // angle: -30
+						}
+
+				 },
+				 yaxis: {
+					min: 0,           //y轴最小值
+					tickInterval: 5,        //网格线间隔大小
+					labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+					show: true,
+					  tickOptions: {
+						  //fontFamily: 'Georgia',
+						  fontSize: '7px'
+						  
+					}
+
+				}
+		 }
+
+	});
+	
+		
+}
+
+
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+function errorMoreCallback(msg){
+    	console.log("errorCallback() msg:" + msg);
+		
+} 
+
+function clearData(){
+		$('#startDate').val('');
+		$('#endDate').val('');
+}
+
+function selectDate(dateType){
+
+	
+	
+	mam.navigator.netTrafficStat.showDateDialog(successCallback,errorCallback);
+	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    		console.log("successCallback() msg:" + msg);
+			if(1==dateType){
+				$('#startDate').val(msg);
+			}else if(2==dateType){
+				$('#endDate').val(msg);
+			}
+			
+		    		
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+			
+    	} 
+
+}
+	
+</script>
+
+</head>
+
+<body  onload="onLoad()">
+<table width="100%" border="0" cellpadding="0" cellspacing="0" bordercolor="#E8F6F7" bgcolor="#FFFFFF" class="BK">
+  <tr>
+    <td height="42" width="40%" align="right" bgcolor="#0A7E81" class="BK2">
+    	<span class="STYLE2">开始日期：</span>
+    </td>
+    <td class="BK3" width="60%" >
+		<input  id="startDate" onclick="selectDate(1)" readonly="readonly">
+	</td>
+  </tr>
+  <tr>
+    <td height="42" align="right" bgcolor="#0A7E81" class="BK2">
+    	<span class="STYLE2">结束日期：</span>
+    </td>
+    <td class="BK3" >
+		<!--<input type="date" id="endDate">-->
+		<input      id="endDate" onclick="selectDate(2)" readonly="readonly">
+	</td>
+  </tr>
+ </table>
+<br />
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <!--<td width="50%">&nbsp;</td>-->
+	 <td width="12%"><table width="130" border="1" cellpadding="0" cellspacing="0" bordercolor="#FFFFFF" >
+      <tr onclick="getRencentMoreDayTraffic(2)"  style="background-color:#0A7E81" id="tr2">
+        <td height="50" align="center"><span class="STYLE4" >wifi流量统计</span></td>
+      </tr>
+    </table></td>
+    <td width="12%"><table width="130" border="1" cellpadding="0" cellspacing="0" bordercolor="#FFFFFF" >
+      <tr onclick="getRencentMoreDayTraffic(3)" style="background-color:#0A7E81" id="tr3">
+        <td height="50" align="center"><span class="STYLE4" >移动流量统计</span></td>
+      </tr>
+    </table></tr>
+    <td width="12%"><table width="80" border="1" cellpadding="0" cellspacing="0" bordercolor="#FFFFFF" bgcolor="#0A7E81" style="display:none">
+      <tr>
+        <td height="50" align="center"><span class="STYLE4" onclick="clearData()">清除</span></td>
+      </tr>
+    </table></td>
+  </tr>
+</table>
+<br />		
+<div id="chart1" style="margin-top:5px; margin-left:0px; width:100%; height:240px;"></div>
+</body>
+</html>
+

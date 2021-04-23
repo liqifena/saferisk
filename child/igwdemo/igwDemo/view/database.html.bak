@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实验室-本地数据库访问</title>
+<style type="text/css">
+</style>
+		<script src="../js/jquery-1.9.1.min.js" /></script>
+		<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+		<script src="../js/public.js"></script>
+		<link href="../style/basePluginCss.css" rel="stylesheet" />
+
+<script>
+			//mam引用
+			var mam = {navigator:navigator};
+			/**
+			*	名称：平台cordova加载
+			*	适用平台：移动门户 、电力一点通
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：无
+			*	回调说明：
+			*		无
+			*		无
+			*	方法说明：
+			*		页面加载时执行onLoad方法，
+			*		deviceReady 标识cordova环境是否准备好,初始值为false
+			*		onDeviceReady 表示cordova加载完毕
+			**/
+			var deviceReady = false;
+			function onLoad(){
+				document.addEventListener("deviceready", onDeviceReady, false);
+				onDeviceReady();
+			}
+			function onDeviceReady() {
+				deviceReady = true;
+				alert("cordova加载完毕！");
+			}
+
+
+
+			/**
+			*	名称：获取通知消息
+			*	适用平台：移动门户 
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：
+			*			appType 用户类型
+			*			sucCallback	成功回调
+			*	传参说明：
+			*			appType 0:公众用户（一点通），1:内部用户(门户)
+			*	回调说明：
+			*			无
+			*			无
+			*	其他说明：
+			*			
+			*	
+			**/
+        function getMessage() 
+		{
+			alert("getMessage");
+			//mam.navigator.loadconfig.messageInfo('1', getMsgCallback);
+			mam.navigator.loadconfig.messageInfo('1', getMsgCallback);
+		}
+        function getMsgCallback(obj) 
+		{
+			alert(obj);
+			alert("消息标题："+obj.messageheader +"消息内容："+obj.messagebody+"消息跳转页面："+obj.uri);
+		}
+
+
+
+		function queryDate() 
+		{
+			alert("queryDate");
+			//mam.navigator.loadconfig.messageInfo('1', getMsgCallback);
+			
+
+//alert("加载本地数据库数据");
+		var array=[];
+		var DbName = "";
+		var tableName="";
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+				/**  IOS使用**/
+			DbName="IMDB.sqlite";
+			tableName="T_DB_SERVER_CODE";
+		}else if("Android" == devicePlatform){
+			/**  安卓使用**/
+			DbName="dlxx_mam.db";
+			tableName="accounts";
+		}else{
+			console.log("invaiate platform");
+		}
+
+	
+	array.push(DbName);
+	array.push(tableName);
+	array.push(null);
+	array.push(null);
+	array.push(null);
+	array.push(null);
+	array.push(null);
+	array.push(null);
+	array.push(null);
+
+
+	mam.navigator.SQLiteCordovaPlugin.queryDate(DbName,tableName,successFunction,errorFunction);
+		}
+
+		var successFunction = function(v){
+		alert('OKEY111');
+		alert(v);
+		alert(JSON.stringify(v));
+		document.getElementById("dateInfo").innerHTML(v);
+	}
+	
+	var errorFunction = function(v){
+		alert(v);
+		alert('失败');
+		
+		
+	}
+
+	function abcd() 
+		{
+			alert("queryDate");
+			
+
+//alert("加载本地数据库数据");
+		var DbName = "";
+		var tableName="";
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+				/**  IOS使用**/
+			DbName="IMDB.sqlite";
+			tableName="T_DB_SERVER_CODE";
+		}else if("Android" == devicePlatform){
+			/**  安卓使用**/
+			DbName="dlxx_mam.db";
+			tableName="accounts";
+		}else{
+			console.log("invaiate platform");
+		}
+
+	mam.navigator.SQLiteCordovaPlugin.abcd(DbName,tableName,successFunction,errorFunction);
+		}
+</script>
+
+</head>
+
+<body>
+<br>
+<br>
+	 <input type='button' onclick='queryDate()' value='查询本地数据库数据queryDate'></input><br>
+<br><br><br>
+	 <input type='button' onclick='abcd()' value='查询本地数据库数据abcd'></input><br>
+</body>
+</html>

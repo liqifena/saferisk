@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<meta content="width=device-width,user-scalable=no" name="viewport" />
+	<meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+	<meta content="width=device-width, initial-scale=1" name="viewport" />
+	<title>页面控制</title>
+	<script src="../js/jquery-3.3.1.min.js"></script>
+	<style type="text/css">
+	</style>
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+	<script src="../js/public.js"></script>
+	<script src="../js/stringFile.js"></script>
+	<script src="../js/vconsole.min.js"></script>
+	<style type="text/css">body {
+	background-color: #E8F6F7;
+}
+.STYLE2 {
+	font-family: "黑体";
+	color: #FFFFFF;
+}
+.STYLE4 {color: #FFFFFF; font-weight: bold; font-family: "黑体"; font-size: 14pt; }
+.BK {
+	border: 1px solid #0A7E81;
+}
+.BK2 {
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: none;
+	border-left-style: solid;
+	border-top-color: #E8F6F7;
+	border-right-color: #E8F6F7;
+	border-left-color: #E8F6F7;
+}
+.BK3 {
+	border-bottom-width: 1px;
+	border-bottom-style: none;
+	border-bottom-color: #0A7E81;
+	border-top-width: 1px;
+	border-top-style: dashed;
+	border-top-color: #0A7E81;
+}
+.BK4 {
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-right-style: solid;
+	border-bottom-color: #E8F6F7;
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-right-width: 1px;
+	border-top-style: solid;
+	border-left-style: solid;
+	border-top-color: #E8F6F7;
+	border-left-color: #E8F6F7;
+	border-right-color: #E8F6F7;
+}
+.textareaStyle1{min-height:40px;border:1px solid #88b8b9;color:#0a7e81;padding:8px;-webkit-box-sizing:border-box;box-sizing:border-box; line-height:120%;width:100%;}
+	</style>
+
+
+    <script type="text/javascript">
+	var vConsole = new VConsole();
+
+		var mam = {navigator:navigator};
+		//标识cordova环境是否准备好,初始值为false   一旦Cordova完全加载，事件就会触发。这有助于确保在加载所有内容之前没有调用Cordova函数。
+		var deviceReady = false;
+		document.addEventListener("deviceready", onDeviceReady, false);	
+
+		/**	
+		pause
+		当应用程序进入后台时触发事件。
+		resume
+		当应用程序从后台返回时，会触发事件。
+		backbutton
+		当按下返回按钮时触发事件。
+		menubutton
+		当按下菜单按钮时触发事件。
+		searchbutton
+		当按下Android搜索按钮时，会触发该事件。
+		startcallbutton
+		按下启动呼叫按钮时会触发该事件。
+		endcallbutton
+		当按下结束通话按钮时触发该事件。
+		volumedownbutton
+		按下音量调低按钮时会触发该事件。
+		volumeupbutton
+		按下音量提高按钮时会触发该事件。
+		
+		document.addEventListener("pause", onPause);
+		document.addEventListener("resume", onResume);
+		//document.addEventListener("backbutton", backbutton);
+		//document.addEventListener("menubutton", menubutton);
+		document.addEventListener("volumedownbutton", volumedownbutton);
+		document.addEventListener("volumeupbutton", volumeupbutton);
+
+**/
+	//cordova环境准备  加载完毕
+
+		
+		function onDeviceReady() {
+			deviceReady = true;
+			console.log("cordova加载完毕！");
+		}
+
+		/**
+
+		document.addEventListener("pause", onPause);
+		document.addEventListener("resume", onResume);
+		function onPause() {
+			console.log("cordova加载完毕！  应用程序进入后台了");
+		}
+		function onResume() {
+			console.log("cordova加载完毕！	应用程序从后台返回了");
+		}	
+		
+		function volumedownbutton() {
+			console.log("按下音量调低按钮了");
+		}
+		function volumeupbutton() {
+			console.log("按下音量提高按钮了");
+		}**/
+/**
+		function backbutton() {
+			alert("按下返回按钮");
+		}
+		function menubutton() {
+			alert("按下菜单按钮了");
+		}
+		**/
+
+		/**	
+		pause
+		当应用程序进入后台时触发事件。
+		resume
+		当应用程序从后台返回时，会触发事件。
+		**/
+		document.addEventListener("pause", onApplicationBackground);
+		document.addEventListener("resume", onApplicationForeground);
+		//前台
+		function onApplicationForeground() {			
+			console.info("onApplicationForeground	应用程序从后台返回了");
+		}
+
+		//后台 
+		function onApplicationBackground() {
+			console.info("onApplicationBackground	应用程序进入后台运行");
+		}
+
+		//页面加载时执行
+	    function onLoad(){
+            console.info("onLoad方法");		    
+	    }
+			/**
+			*	名称：回退按钮 开关
+			*	方法名称：setBackButton 
+			*	适用平台：移动门户 、(电力一点通 暂时不可用)
+			*	负责人：
+			*	开发日期：
+			*	版本：1.1
+			*	参数说明：
+			*			backType: 0代表不可返回，1代表可以返回
+			*	回调说明：
+			*		successCallback
+			*		errorCallback
+			*	方法说明：
+			*		页面加载时执行onLoad方法，
+			*		deviceReady 标识cordova环境是否准备好,初始值为false
+			*		onDeviceReady 表示cordova加载完毕
+			**/
+		/**
+		*调用此插件，客户端及移动门户title 回退按钮失效
+		*成功回调 与 失败退到
+		**/
+	function pageBackOFF() {
+		alert("回退按钮失效，禁止回退");
+		mam.navigator.appmenu.setBackButton(successCallback,errorCallback,'0');
+		alert("回退按钮已经失效");
+
+		}
+	function pageBackON() {
+		alert("回退按钮放开，允许回退");
+		mam.navigator.appmenu.setBackButton(successCallback,errorCallback,'1');
+		alert("允许回退");
+
+		}
+function successCallback()
+{
+		alert("successCallback");
+
+}
+function errorCallback()
+{
+		alert("errorCallback");
+
+}
+
+function setTooBar(type)
+{
+	alert(type);
+	mam.navigator.appmenu.setTooBar(setTooBarcallback,type);
+}
+function setTooBarcallback(obj)
+{
+	alert("全屏设置成功 "+JSON.stringify(obj));
+
+}
+
+function screenControl(type)
+{
+	alert(type);
+	//parame  0 横屏	1竖屏	2默认显示
+	mam.navigator.appmenu.screenControl(screenControlcallback,type);
+}
+
+function globalSecure(type)
+{
+	alert(type);
+	//parame  0 允许截屏	1 禁止截屏
+	mam.navigator.appmenu.globalSecure(screenControlcallback,type);
+}
+
+
+function screenControlcallback(obj)
+{
+	alert("成功回调 "+JSON.stringify(obj));
+
+}
+
+
+
+ 	/************************************************/
+	// 判断屏幕是否旋转
+
+	function orientationChange() {
+		switch(window.orientation) {
+		　　case 0: 
+				alert("肖像模式 0,screen-width: " + screen.width + "; screen-height:" + screen.height);
+				break;
+		　　case -90: 
+				alert("左旋 -90,screen-width: " + screen.width + "; screen-height:" + screen.height);
+				break;
+		　　case 90:   
+				alert("右旋 90,screen-width: " + screen.width + "; screen-height:" + screen.height);
+				break;
+		　　case 180:   
+				alert("风景模式 180,screen-width: " + screen.width + "; screen-height:" + screen.height);
+			　　break;
+			};
+		};
+
+	// 添加事件监听
+
+	addEventListener('load', function(){
+		console.log("横竖屏监听");
+		orientationChange();
+
+		window.onorientationchange = orientationChange;
+
+	}
+	);
+
+	function openUrl()
+	{
+		var fileUrl = document.getElementById("diyUrl").value;
+		window.open(fileUrl, "_blank");
+	}
+
+	/**
+	//到扫描界面
+**/
+	function executeGoToScanPager(){
+    	console.log("executeGoToScanPager()-->start");
+    	if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取平台信息
+    	var devicePlatform = device.platform;
+		//document.getElementById("list").innerHTML = "";
+    	//执行到这边表示cordova环境准备完成,在二维码扫描界面
+    	mam.navigator.forward.goToScanTwoDiemCode(successCallback,errorCallback);
+    	
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    		console.log("successCallback() msg:" + msg);
+			//alert("11");
+    		document.getElementById('diyUrl').value = msg;	
+        	
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+			//document.getElementById("list").innerHTML = "";
+    	} 
+    }
+
+</script>
+</head>
+<body onload="onLoad();">
+<br><br><br><br>
+<div>
+<table bgcolor="#ffffff" border="0" bordercolor="#e8f6f7" cellpadding="0" cellspacing="0" class="BK" height="20%" width="20%">
+	<tbody>
+		<tr>
+			<td align="center" onclick="pageBackOFF()" > <img border="0" height="103" src="../images/dt.png" width="103" /> </td>
+
+		</tr>
+
+		<tr>
+			<td align="center" onclick="pageBackON()"> <img border="0" height="103" src="../images/dt.png" width="103" /> </td>
+
+		</tr>
+		
+	</tbody>
+</table>
+	<br><br><br><br>
+	<input type='button' onclick="setTooBar(0)" value='去除toolbar（全屏）'></input>
+	<input type='button' onclick="setTooBar(1)" value='恢复toolbar（默认）'></input>
+	<br><br><br><br>
+	<br><br><br><br>
+	<input type='button' onclick="globalSecure(0)" value='允许截屏'></input>
+	<input type='button' onclick="globalSecure(1)" value='禁止截屏'></input>
+	<br><br><br><br>
+	 <input type='button' onclick="screenControl(0)" value='横屏'></input>
+	 <input type='button' onclick="screenControl(1)" value='竖屏'></input>
+	 <input type='button' onclick="screenControl(2)" value='恢复默认'></input><br><br><br><br>
+	
+	<input type='button' onclick="executeGoToScanPager()"  value='资源生成二维码 快速扫码填入信息'></input>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+	<textarea   rows="5" cols="40" id='diyUrl' placeholder='输入文件URL'></textarea><br><br>
+	<input type='button' onclick="openUrl()"  value='访问'></input>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+
+
+</div>
+
+</body>
+</html>

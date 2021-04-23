@@ -1,0 +1,1188 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>下载/打开</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html;">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+ 	<script type="text/javascript" src="../js/jquery-3.3.1.min.js"></script>
+
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+	<script src="../js/vconsole.min.js"></script>
+	<style>
+		#myProgress {
+		  width: 100%;
+		  background-color: #ddd;
+		}
+
+		#myBar {
+		  width: 0%;
+		  height: 30px;
+		  background-color: #4CAF50;
+		  text-align: center;
+		  line-height: 30px;
+		  color: white;
+		}
+	</style>
+    <script type="text/javascript">
+	var vConsole = new VConsole();
+/**
+
+cordova环境准备
+
+**/
+var mam = {navigator:navigator};
+//标识cordova环境是否准备好,初始值为false
+var deviceReady = false;
+
+var appCode ='SYSCS'
+var appName = '实验室Cordova';
+//var hellocordova = 'hellocordova';   // /sysCordova/file.html
+var getFileList = 'getFileList';   // /sysCordova/controller/getFileList   获取文件清单
+var post = 'post';	// /sysCordova/controller/post							post请求
+var get = 'get';   // /sysCordova/controller/get							get请求
+var getBody = 'getBody';   // /sysCordova/controller/getBody				get请求，body取数据
+var getORpost = 'getORpost';   // /sysCordova/controller/getORpost			get或get请求都支持
+var download = 'download';   // /sysCordova/controller/download				下载
+var upload = 'upload';   // sysCordova/controller/upload'					上传
+var upload3 = 'upload3';    
+var upload9 = 'upload9';  
+
+
+//页面加载时执行
+function onLoad(){
+	console.log("onLoad加载完毕！");
+	document.addEventListener("deviceready", onDeviceReady, false);
+	
+	//onDeviceReady();
+}
+/**
+
+	cordova环境准备  加载完毕
+
+**/
+function onDeviceReady() {
+	deviceReady = true;
+	console.log("cordova加载完毕！");
+	getFileInfo('SYSCS');// 获取本地文件信息
+	getFileListF();//获取服务端文件信息
+
+	
+}
+
+//$(function () {
+function initInput () {
+
+   var nav = navigator.userAgent.toLowerCase();
+    var isIos = (nav.indexOf('iphone') != -1) || (nav.indexOf('ipad') != -1);
+   if (isIos) {
+       $("input:file").removeAttr("capture");
+      };
+   }
+
+
+//system 判断
+function phoneType () {
+    var u = navigator.userAgent;
+    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
+    if(isAndroid){
+        return 'android'
+    }else if(isiOS){
+        return 'ios'
+    }else{
+		return 'gg'
+	}
+}
+
+/**
+
+	【 作废 作废 作废】
+**/
+		
+function openFileManage()
+{
+	if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			console.log('执行到这边表示cordova环境没有准备好');
+			return;
+		}
+	console.log('openFileManage');
+	try{	
+	navigator.appfilemanage.open();
+	}catch(ex)
+	{
+		console.log("try: "+ex.message);
+	}	
+}
+/**
+	获取文件信息
+	传入应用编码：appCode: ‘SYS’
+ 
+**/
+function getFileInfo(obj)
+{
+	console.log('获取文件信息'+ obj);
+	mam.navigator.appfilemanage.getFileInfo3(getFileInfoCallback,obj);
+}
+/**
+	回调说明：
+	fileStatus		文件状态 对应的值域为{1，-1，0，3，4}。
+					 1：提交下载成功；
+					 0：等待用户确认（在蜂窝网络下需要用户确认）；
+					 -1：提交下载失败（用户确认时取消，或者网络异常，或者本地存储状态异常）；
+					 3：下载成功；
+					 4：下载暂停。
+
+	fileUrl			本地文件路径【文件路径为i国网指定路径】
+	filename	    文件名称
+	fileSize		文件大小
+	fileCode		文件编码
+
+**/
+var basefileInfo="";
+function getFileInfoCallback(obj)
+{
+	console.log('getFileInfo3 Callback  ' + JSON.stringify(obj));
+	basefileInfo = obj;
+}
+
+
+
+
+/**
+	文件 下载 
+	appCode			应用编码		填写应用编码，保存文件至应用相对路径：
+----appServerCode	应用服务编码	固定值  20200618 目前先不填----
+
+	urlType			URL类型		20200618 目前先填 0 使用白名单下载
+								0 白名单downLoadUrl必填
+								1 应用服务编码	（此处填 1 	则appServerCode必填）
+
+	downLoadUrl		下载URL			文件下载URL  可谓互联网URL 和 白名单URL
+	saveUrl			本地保存url		保存应用相对路径 如：设置 /PDF   对应实际路径 SYSCS/PDF/1_pdf_101M_文档.pdf
+	fileName		文件名称		保存本地文件名称 重命名文件
+	appName			应用名称		应用名称		
+----fileSize		文件大小		固定值 作废 传10000----
+----fileStatus		文件状态		固定值 作废 传 0 文件状态：0 允许打开  1 不允许打开----
+	fileCode		文件编码		文件编码	内容自定义、唯一  用于批量删除
+
+function mediaDownload(id,codova)
+{
+	var appCode ='SYSCordova'+codova;
+	var appServerCode ='download';
+	var urlType  =0;
+	var downLoadUrl  ='https://mam1.ft-power.com.cn:10030/html8/'+id+'.mp4';
+	var saveUrl  ='/SYSCordova_media'+codova;
+	var fileName   ='测试MP4_'+id+".mp4";
+	var appName   ='实验室Cordova_'+codova;
+	var fileSize   ='2169451';
+	var fileStatus  ='0';
+	var fileCode  ='SYSCordova_media_'+id;
+
+	console.log(
+	" 应用编码= "+appCode+
+	"\r\n 应用服务编码= "+ appServerCode +
+	"\r\n 下载类型= "+ urlType +
+	"\r\n 下载URL= " + downLoadUrl+
+	"\r\n 保存url= " + saveUrl +
+	"\r\n 文件名称= " + fileName +
+	"\r\n 应用名称= " + appName +
+	"\r\n 文件大小= " + fileSize +
+	"\r\n 文件状态= " + fileStatus +
+	"\r\n 文件编码= " + fileCode );
+
+	console.log("mediaDownload    插件调用成功  "+id);
+	mam.navigator.appfilemanage.fileDownload(mediaDownloadCallback,appCode,appServerCode,urlType,downLoadUrl,saveUrl,fileName,appName,fileSize,fileStatus,fileCode);
+}
+
+function mediaDownloadCallback(obj)
+{
+	console.log("mediaDownload    插件调用  回调"+ JSON.stringify(obj));
+}
+**/
+/**
+	暂停下载
+	参数说明：
+	callback
+	appCode				应用编码
+	downLoadUrl			文件下载地址 
+**/
+function pauseDown(downLoadUrl) {
+	
+	console.log("暂停下载  应用编码 "+ appCode + "\r\n文件下载url "+downLoadUrl);
+	mam.navigator.appfilemanage.filePause(filePauseSuccessCallback,appCode,downLoadUrl);
+}
+/**
+	暂停下载回调
+	参数说明：
+	
+**/
+function filePauseSuccessCallback(obj) {
+	console.log("暂停下载   插件调用  回调"+ JSON.stringify(obj));
+}
+/**
+	mp4下载 回调 
+
+	fileStatus对应的值域为{1，-1，0，3，4}。
+			1：提交下载成功；
+			0：等待用户确认（在蜂窝网络下需要用户确认）；
+			-1：提交下载失败（用户确认时取消，或者网络异常，或者本地存储状态异常）；
+			3：下载成功；
+			4：下载暂停。
+			progress对应的值域为-1至100的整型数。
+			-1：下载失败；其它则为下载进度状态值。
+
+**/
+
+
+
+/**
+	删除文件
+**/
+function removefile(appcode,filename)
+{
+	console.log("应用编码 "+appcode+"\r\n 文件名称 "+filename);
+	mam.navigator.appfilemanage.rmFile(rmcallback,appcode,filename);
+
+}
+/**
+	批量 删除文件 
+	appcode				应用编码
+	fileCode			文件编码 内容自定义、唯一 用于删除操作 数据类型 数组 ['fileCodes1','fileCodes2']
+**/
+function removefiles(appcode,fileCodes)
+{
+	console.log(" 应用编码 "+appcode+"\r\n 文件  "+fileCodes);
+	mam.navigator.appfilemanage.rmFiles(rmcallback,appcode,fileCodes);
+}
+/**
+	删除 回调
+**/
+function rmcallback(obj)
+{
+	console.log(JSON.stringify(obj));
+	// 将基础信息情况，否则文件删除后有缓存
+	basefileInfo='';
+	onDeviceReady();
+}
+
+
+
+
+
+/**
+	下载 图片    作废 作废 作废
+**/
+function sddownload()
+{
+	mam.navigator.down.sd_download(sdsuccess, sderrorback,'https://mam.sgcc.com.cn/html/internal/mobile.png' ,'fileName.png', '/WhiteDir/images/testImage','SYS', 'resImage');
+}
+/**
+	下载 回调 图片预览 
+**/
+function sdsuccess(obj)
+{
+	console.log('sdsuccess2   '+obj);
+	document.getElementById("sdimage").src = "WhiteDir/testImage/fileName.png";
+}
+function sderrorback()
+{
+	console.log('sderrorback');
+}
+
+/**
+	下载 zip  作废 作废 作废
+**/
+function sddownloadZIP()
+{
+	mam.navigator.down.sd_download(decsuccess, deerrorback,'https://mam1.ft-power.com.cn:10030/netplatform-web/category/download.do?fileid=11976&hashval=BCECA472A9413C8D45455A37D853B1B5&type=1','bcbdwjmc.zip', '/WhiteDir/testzip', 'SYS', 'testzipservercode');
+}
+
+/**
+	下载 zip 
+**/
+function downloadZIP(downLoadUrl)
+{
+
+	var saveUrl = '/zip';
+	var fileName = '1_zip.zip';
+	var fileCode = '1_zip';	
+
+	fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode);
+	
+}
+/**
+	解压 zip 
+**/
+function decompression(fileName)
+{
+	alert('先下载，再解压');
+	var fileUrl = getFileUrl(fileName);
+	console.log("解压 fileUrl:  "+fileUrl);
+	mam.navigator.appfilemanage.decompression1(decsuccess,deerrorback,fileUrl);
+}
+/**
+	下载/解压 zip  回调 
+**/
+function decsuccess(obj)
+{
+	console.log('decsuccessobj   '+JSON.stringify(obj));
+}
+function deerrorback(obj)
+{
+	console.log('decsuccessobj   '+JSON.stringify(obj));
+}
+
+/**
+	资源 
+**/
+var doc11b = 'https://mam1.ft-power.com.cn:10030/html8/1_doc_11b_文档.doc';
+var doc22b = 'https://mam1.ft-power.com.cn:10030/html8/1_doc_22b_文档.doc';
+
+var html131K = 'https://mam1.ft-power.com.cn:10030/html8/1_html_131K.html';
+
+var pdf569k = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_569k.pdf';
+var pdf2M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_2M.pdf';
+var pdf21M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_21M.pdf';
+var pdf22M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_22M_文档.pdf';
+var pdf28M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_28M_文档.pdf';
+var pdf101M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_101M_文档.pdf';
+var pdf403M = 'https://mam1.ft-power.com.cn:10030/html8/1_pdf_403M.pdf';
+
+var mp42M = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_2M.mp4';
+var mp42M3 = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_2M3.mp4';
+var mp436M = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_36M.mp4';
+var mp42M4 = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_2M4_视频.mp4';
+var mp43M = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_3M.mp4';
+var mp471M = 'https://mam1.ft-power.com.cn:10030/html8/2_mp4_71M.mp4';
+
+var apk16M = 'https://mam1.ft-power.com.cn:10030/html8/3_apk_16M.apk';
+var apk16M2 = 'https://mam1.ft-power.com.cn:10030/html8/3_apk_16M2_安卓.apk';
+var image1 ='https://mam.sgcc.com.cn/html/internal/mobile.png';
+
+var zip2M = 'https://mam1.ft-power.com.cn:10030/netplatform-web/category/download.do?fileid=11976&hashval=BCECA472A9413C8D45455A37D853B1B5&type=1';
+
+
+
+/**
+	//到扫描界面
+**/
+	function executeGoToScanPager(){
+    	console.log("executeGoToScanPager()-->start");
+    	if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取平台信息
+    	var devicePlatform = device.platform;
+		//document.getElementById("list").innerHTML = "";
+    	//执行到这边表示cordova环境准备完成,在二维码扫描界面
+    	mam.navigator.forward.goToScanTwoDiemCode(successCallback,errorCallback);
+    	
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){
+    		console.log("successCallback() msg:" + msg);
+			//alert("11");
+    		document.getElementById('diyUrl').value = msg;	
+        	
+    	}
+    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+			//document.getElementById("list").innerHTML = "";
+    	} 
+    }
+
+/**
+	自定义 操作
+**/
+function diyDownload()
+{
+	var fileUrl = document.getElementById("diyUrl").value;
+	var saveUrl = '/diy';
+	var fileName = document.getElementById("diyName").value;
+
+	var fileCode = '1_diyFile';	
+
+	fileDownload(appCode,fileUrl,saveUrl,fileName,fileCode);
+}
+function diybd()
+{
+	var fileName = document.getElementById("diyName").value;
+	if (fileName !== null || fileName !== undefined || fileName !== '') {
+		
+		openFile(fileName);
+	}else
+	{
+		alert('填写文件名称且带后缀');
+	}
+}
+
+
+	
+
+function diyzx()
+{
+	var fileUrl = document.getElementById("diyUrl").value;
+	openFile(diyzx);
+}
+
+
+/**
+	下载 图片  推荐
+**/
+function imageDownload(downLoadUrl)
+{
+	//mam.navigator.down.sd_download(sdsuccess, sderrorback,'https://mam.sgcc.com.cn/html/internal/mobile.png' ,'fileName.png', '/WhiteDir/images/testImage','SYS', 'resImage');
+	var saveUrl = '/image';
+	var fileName = 'mobile.png';
+	var fileCode = '1_image';	
+	fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode);
+}
+/**
+	下载完成 图片预览 
+**/
+function preview(fileName)
+{
+	var fileUrl =  getFileUrl(fileName);
+	console.log("preview  fileUrl:  "+fileUrl);
+	console.log("preview  fileUrl22:  "+'../../'+fileUrl);
+	
+
+	if(phoneType()=='ios'){
+		//IOS 文件完整路径   igwsgcc300/serverfile/local_1597368143580045.jpg
+		//IOS 存放与应用包同级目录  应用自定义文件夹。
+		document.getElementById("downloadImage").src = '../../'+fileUrl;
+	}else if(phoneType()=='android'){
+		// 安卓 与应用版本同级
+		document.getElementById("downloadImage").src = '../../../../image/mobile.png';
+
+	}
+
+
+
+
+	// 将基础信息清空，否则文件删除后有缓存
+	//basefileInfo='';	
+}
+
+
+
+function downloadDOC(downLoadUrl)
+{	
+	var saveUrl = '/DOC';
+	var fileName = '1_doc_22b_文档.doc';
+	var fileCode = '1_doc';	
+	
+	fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode);
+
+}
+
+function downloadPDF(downLoadUrl)
+{	
+	var saveUrl = '/PDF';
+	var fileName = '1_pdf_21M.pdf';
+	var fileCode = '1_pdf';	
+	
+	fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode);
+
+}
+
+/**
+	文件 下载 
+	appCode			应用编码		填写应用编码，保存文件至应用相对路径：
+	appServerCode	应用服务编码	使用应用服务编码进行下载
+
+	urlType			URL类型		20200618 目前先填 0 使用白名单下载
+								0 白名单downLoadUrl必填
+								1 应用服务编码	（此处填 1 	则appServerCode必填）
+	downLoadUrl		下载URL			文件下载URL  可为互联网URL 和 白名单URL
+	saveUrl			本地保存url		保存应用相对路径 如：设置 /PDF   对应实际路径 SYSCS/PDF/1_pdf_101M_文档.pdf
+	fileName		文件名称		保存本地文件名称 重命名文件 【文件名称必须带后缀】 1_doc_22b_文档.doc
+	appName			应用名称		应用名称		
+----fileSize		文件大小		固定值 作废 传10000----
+----fileStatus		文件状态		固定值 作废 传 0 文件状态：0 允许打开  1 不允许打开----
+	fileCode		文件编码		文件编码	内容自定义、唯一  用于批量删除
+**/
+
+function fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode)
+{
+	
+	var appServerCode ='download';
+	var urlType  = 0;
+	var fileSize   ='10000';
+	var fileStatus  ='0';	
+
+	
+
+	console.log(
+	" 应用编码= "+appCode+
+	"\r\n 应用服务编码= "+ appServerCode +
+	"\r\n 下载类型= "+ urlType +
+	"\r\n 下载URL= " + downLoadUrl+
+	"\r\n 保存url= " + saveUrl +
+	"\r\n 文件名称= " + fileName +
+	"\r\n 应用名称= " + appName +
+	"\r\n 文件大小= " + fileSize +
+	"\r\n 文件状态= " + fileStatus +
+	"\r\n 文件编码= " + fileCode );
+
+	console.log("fileDownload    插件调用成功  ");
+	mam.navigator.appfilemanage.fileDownload(fileDownloadCallback,appCode,appServerCode,urlType,downLoadUrl,saveUrl,fileName,appName,fileSize,fileStatus,fileCode);
+}
+/**
+	文件下载 回调 
+
+	fileStatus对应的值域为{1，-1，0，3，4}。
+			1：提交下载成功；
+			0：等待用户确认（在蜂窝网络下需要用户确认）；
+			-1：提交下载失败（用户确认时取消，或者网络异常，或者本地存储状态异常）；
+			3：下载成功；
+			4：下载暂停。
+			progress对应的值域为-1至100的整型数。
+			-1：下载失败；其它则为下载进度状态值。
+
+**/
+
+function fileDownloadCallback(obj)
+{	
+/**
+		var fileprogress = obj.progress;	
+		var width = 0;
+		var elem = document.getElementById("myBar");   
+		var id = setInterval(frame, 0);
+		 function frame() {
+			if (width >= fileprogress) {
+			  clearInterval(id);
+			  console.log("width 100   回调    "+ width);
+			 return;
+			} else {
+				  
+				   width++; 
+				  elem.style.width = width + '%'; 
+				  elem.innerHTML = width * 1  + '%';
+			}
+			console.log("fileDownload  插件调用  回调    "+ JSON.stringify(obj));
+		}
+		**/
+		console.log("fileDownloadCallback  下载文件  回调    "+ JSON.stringify(obj));
+		onDeviceReady();	
+}
+
+
+
+/**
+	下载文件 老方法  作废 作废 作废 
+
+	插件参数说明：
+	wordUrl 应用配置白名单地址 （可以在网页中打开并下载mp4）   
+		https://mam1.ft-power.com.cn:10030		平台开发环境域名、
+		/html8/1_doc_22b_文档.doc		应用资源地址
+	 successCallback 成功回调 状态码见开发指南
+	 errorback 失败回调 状态码？
+	 "downdocument1/"  文件保存手机本地根目录
+	 "测试下载Word.doc"   保存本地doc名称
+	 "SYS"		应用编码
+	 "DOWNVIDEO"		应用服务编码
+	*/
+	var wordUrl = "https://mam1.ft-power.com.cn:10030/html8/1_doc_22b_文档.doc";
+	  function fileDownloadOld() {			
+		console.log("down下载 1_doc_22b_文档.doc");	
+		mam.navigator.down.down(successCallback, errorback,wordUrl,  "downdocument1/","测试下载Word.doc", "SYS", "testWord");
+	}
+	/**
+	下载 文件  回调 
+	**/
+	function successCallback(v) {
+		console.log("下载成功：" + JSON.stringify(v));				
+	}
+	function errorback(v) {
+		console.log("下载下载失败：" + JSON.stringify(v));
+	}
+
+/**
+	打开文件
+	filePath	文件路径   
+			本地打开：  文件下载后自定义路径【见 downloadDOC  saveUrl 】	 DOC/1_doc_22b_文档.doc
+			在线打开：	https://mam1.ft-power.com.cn:10030/html8/1_doc_22b_文档.doc
+**/
+	// URL 测试
+	var URLRexExp = new RegExp(/^[A-Za-z]+:\/\/[A-Za-z0-9-_]+.[A-Za-z0-9-_%&\?\/.:=]+$/);
+
+
+	function openFile(fileInfo)
+ {
+	 var cpUrl = getCaption(fileInfo);
+	console.log("截取url:  "+cpUrl);
+	if(URLRexExp.test(cpUrl))
+	{
+		console.log("在线打开 " +fileInfo);
+		
+		mam.navigator.appfilemanage.openFile2(succCallback,errorcallback, fileInfo);
+	}else{		
+		var fileUrl =  getFileUrl(fileInfo);
+		console.log("本地打开 fileUrl:  "+fileUrl);
+		mam.navigator.appfilemanage.openFile2(succCallback,errorcallback,fileUrl);
+	}
+ }
+
+
+ function succCallback(v)
+{
+	 basefileUrl="";
+	console.log("openFile 成功  " + JSON.stringify(v));
+}
+function errorcallback(v)
+{
+	 basefileUrl="";
+	console.log("openFile失败  " + JSON.stringify(v));
+}
+
+//获取本地文件URL
+function getFileUrl(fileName)
+ {	
+	//console.log("getFileUrl   basefileInfo  " +  basefileInfo[2].fileUrl);
+	//console.log("basefileInfo   filename  " +  basefileInfo[2].filename);
+	console.log("getFileUrl	fileName  " + fileName);
+	console.log("getFileUrl	basefileInfo  " + JSON.stringify(basefileInfo));
+
+	if (basefileInfo !== null || basefileInfo !== undefined || basefileInfo !== '') {
+		for(var i in basefileInfo){
+				switch (fileName) {
+					case basefileInfo[i].filename:
+						console.log("getFileUrl:  "+basefileInfo[i].fileUrl);
+						//basefileUrl = basefileInfo[i].fileUrl + "/" + fileName;
+						//console.log("2 getFileUrl:  "+basefileUrl);
+						return basefileInfo[i].fileUrl;
+				}
+			}
+	}
+ }
+
+//判断文件状态
+function getFileStatus(fileName)
+ {	
+	fileName = 'local_'+fileName;
+	if (basefileInfo !== null || basefileInfo !== undefined || basefileInfo !== '') {
+		for(var i in basefileInfo){
+
+				console.info(i+'	服务端文件  '+ fileName);
+
+				console.info(i+'	本地文件  '+basefileInfo[i].filename);
+
+				console.info(i+"	getFileStatus:		"+(fileName == basefileInfo[i].filename && basefileInfo[i].fileStatus == '3'));
+
+				if(fileName == basefileInfo[i].filename && basefileInfo[i].fileStatus == '3')
+				{
+					console.info(i+"	文件存在:		"+1);
+					return true;
+					break;
+				}else
+				{
+					console.info(i+"	文件不存在:		"+1);
+				}
+		}
+	 }
+}
+
+/**
+	获取上传服务端文件信息
+	传入应用编码：appCode: SYSCS 
+**/
+function getFileListF()
+{
+	console.log('获取服务端文件信息');
+	mam.navigator.ajax.getJSON('SYSCS','',getFileList, getFileListCallback, getFileListerrCallback);
+}
+function getFileListCallback(obj)
+{
+	var serviceFile = obj.data;
+	var aurl = '';
+	$("#showFile").empty();
+
+	for(var i in serviceFile){
+
+		var serviceFileName = serviceFile[i].fileName;
+		var serviceFileSize = serviceFile[i].fileSize;
+
+		//取出文件的扩展名
+		 var index = serviceFileName.lastIndexOf(".");
+		 var ext = serviceFileName.substr(index+1);
+
+
+		if(getFileStatus(serviceFileName))
+		{
+			if(ext == 'zip')
+			{
+				aurl +='<input type=\'button\' onclick=\"decompression(\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【解压 zip】\'/><br><br>';
+				//aurl +='<input type=\'button\' onclick=\"removefile(\'SYSCS\',\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【删除 zip】\'/><br><br>';
+
+			}else if(ext == 'png' ||ext == 'jpg'  )
+			{
+				aurl +='<input type=\'button\' onclick=\"preview(\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【预览本地图片】\'/><br><br>';
+				//aurl +='<input type=\'button\' onclick=\"removefile(\'SYSCS\',\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【删除】\'/><br><br>';
+			}else if(ext == 'doc' ||ext == 'docx'  ||ext == 'pdf')
+			{
+				aurl +='<input type=\'button\' onclick=\"openFile(\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【本地打开】\'/>&nbsp;&nbsp;&nbsp;&nbsp;';
+				aurl +='<input type=\'button\' onclick=\"openFile(\'https://mam1.ft-power.com.cn:10030/sysCordova/controller/download2?fileName='+serviceFileName+'&inline=true\')\" value=\''+serviceFileName+' 【在线打开】\'/><br><br>';
+				//aurl +='<input type=\'button\' onclick=\"removefile(\'SYSCS\',\'local_'+serviceFileName+'\')\" value=\''+serviceFileName+' 【删除】\'/><br><br>';
+			}
+		}else
+		{
+			aurl +='<input type=\'button\' onclick=\"fileDownload2(0,\''+serviceFileName+'\')\" value=\''+serviceFileName+' 【白名单下载】\'/><br>';
+			aurl +='<input type=\'button\' onclick=\"fileDownload2(1,\''+serviceFileName+'\')\" value=\''+serviceFileName+' 【服务编码下载  推荐】\'/><br><br>';
+		}
+	}
+	
+		console.log('获取服务端文件信息 成功 aurl   '+aurl);
+		$("#showFile").html(aurl);
+
+}
+function getFileListerrCallback(obj)
+{
+	console.log('获取服务端文件信息 失败'+JSON.stringify(obj));
+}
+/**
+	白名单 下载 【推荐】	 fileDownload2
+
+	appCode			应用编码		填写应用编码，保存文件至应用相对路径：
+	appServerCode	应用服务编码	使用应用服务编码进行下载
+
+	urlType			URL类型			0 白名单downLoadUrl必填
+									1 应用服务编码	（此处填 1 	则appServerCode必填）
+	param			请求参数		请求参数遵从 KEY:VALUE格式。			
+	downLoadUrl		下载URL			文件下载URL  可为互联网URL 和 白名单URL
+	saveUrl			本地保存url		保存应用相对路径 如：设置 /PDF   对应实际路径 SYSCS/PDF/1_pdf_101M_文档.pdf
+	fileName		文件名称		保存本地文件名称 重命名文件 【文件名称必须带后缀】 1_doc_22b_文档.doc
+	fileCode		文件编码		文件编码	内容自定义、唯一  用于批量删除
+**/
+
+function fileDownload2(id,filename)
+{
+	console.log('fileDownload2     filename= '+filename+'  id=  ' +id);
+	if(id==1)
+	{
+		var appServerCode = 'download2';
+		var downLoadUrl = '';
+		var param={fileName:filename};		//使用 服务编码 下载，此处填写参数。 
+	}else
+	{
+		var appServerCode = '';
+		var downLoadUrl = 'https://mam1.ft-power.com.cn:10030/sysCordova/controller/download/' + filename;//使用 白名单 下载，URL 后面直接配置参数
+		var param= '';		//使用 白名单 下载，此处为空。
+	}
+	var urlType = id;					//0 白名单 1 应用服务编码	
+	var saveUrl = '/serverfile';
+	var fileName='local_'+filename;
+	var fileCode = '1_server';
+
+	console.log(
+	" 应用编码= "+appCode+
+	"\r\n 应用服务编码= "+ appServerCode +
+	"\r\n 下载类型= "+ urlType +
+	"\r\n 参数= "+ JSON.stringify(param) +
+	"\r\n 下载URL= " + downLoadUrl+
+	"\r\n 保存url= " + saveUrl +
+	"\r\n 文件名称= " + fileName +
+	"\r\n 文件编码= " + fileCode );
+	mam.navigator.appfilemanage.fileDownload2(fileDownloadCallback,appCode,appServerCode,urlType,downLoadUrl,saveUrl,fileName,fileCode,param);
+}
+
+/**
+	服务端资源 白名单下载
+**/
+function serviceDownload(fileName)
+{
+	console.log('serviceDownload     '+fileName);
+	var saveUrl = '/serverfile';
+	var fileCode = '1_server';
+	var downLoadUrl = 'https://mam1.ft-power.com.cn:10030/sysCordova/controller/download/' + fileName;
+
+	fileDownload(appCode,downLoadUrl,saveUrl,fileName,fileCode);
+	
+}
+/**
+	上传资源 至 服务端
+**/
+function appFileUpload(id)
+{
+	alert(id);
+	var params={ param1:id, param2:'这是param2   appFileUpload' };
+	var path = document.getElementById('sourceUrl').value;
+	alert(path);
+	mam.navigator.appfilemanage.appFileUpload(fileDownloadCallback,getFileListerrCallback,appCode,id,path,params)
+}
+/**
+单文件上传	1
+参数说明：
+	successCallback		成功回调
+	errorCallback		失败回调
+	appCode				应用编码
+	appServerCode		应用服务编码
+	path				本地文件路径	字符串
+	params				上传参数  key:value
+**/
+function appServerUpload(id)
+{
+	alert(id);
+	var params={ param1:id, param2:'这是param2      appServerUpload' };
+	var path = document.getElementById('sourceUrl').value;
+	alert(path);
+	//mam.navigator.appfilemanage.appServerUpload(getFileListCallback,getFileListerrCallback,appCode,id,path,params)fileDownloadCallback
+	mam.navigator.appfilemanage.appServerUpload(fileDownloadCallback,getFileListerrCallback,appCode,id,path,params)
+}
+/**
+单文件上传	2
+参数说明：
+	successCallback		成功回调
+	errorCallback		失败回调
+	appCode				应用编码
+	appServerCode		应用服务编码
+	path				本地文件路径	字符串
+	params				上传参数  key:value
+**/
+function appServerUploadFromBody(id)
+{
+	alert(id);
+	var params={ param1:id, param2:'这是param2		appServerUploadFromBody' };
+	var path = document.getElementById('sourceUrl').value;
+	alert(path);
+	mam.navigator.appfilemanage.appServerUploadFromBody(fileDownloadCallback,getFileListerrCallback,appCode,id,path,params)
+}
+/**
+多文件上传
+参数说明：
+	successCallback		成功回调
+	errorCallback		失败回调
+	appCode				应用编码
+	appServerCode		应用服务编码
+	path				本地文件路径	Arry	
+	params				上传参数  key:value
+**/
+function fileUploads(id)
+{
+	alert(id);
+	var params={ param1:id, param2:'这是param2      fileUploads' };
+	var path = (document.getElementById('sourceUrl').value).split(',');
+	console.log('2  '+path); //多文件上传，传入字符串数组
+
+	mam.navigator.appfilemanage.fileUploads(getFileListCallback,getFileListerrCallback,appCode,id,path,params)
+}
+/**
+
+拍照 返回原图和压缩后图片
+参数说明：
+	successCallback		成功回调
+	errorCallback		失败回调
+	默认后置摄像头，用户在拍照界面手动选择前置拍照
+
+**/
+		
+function takePhotoNew()
+{
+	console.log("takePhotoNew： ");
+	navigator.ImageSelectPlugin.takePhoto(takePhotoCallback);
+}
+function takePhotoCallback(obj)
+{
+	document.getElementById('sourceUrl').value = obj.data.oripath;
+}
+//图片多选
+function imageSelect(){
+	navigator.ImageSelectPlugin.imageSelect(imageCallback);
+}
+
+function imageCallback(v){
+	console.log("imageSelect 1   " + JSON.stringify(v));
+	//var imageList = getCaption2(v);
+	document.getElementById('sourceUrl').value =  v.data.imageList;
+
+}
+
+//*********************************************************
+// 截取字符串
+function getCaption(obj){
+
+	//var index=obj.lastIndexOf("\."); 获得 . 之后
+	//obj=obj.substring(index,obj.length);
+
+
+	var index=obj.lastIndexOf("\/"); //获得 / 之前
+	obj=obj.substring(0,index);
+	// console.log(obj);
+	return obj;
+}
+// 截取字符串
+function getCaption2(obj){
+	console.log(obj.data.imageList);
+	var imageList = (obj.data.imageList).replace(/\[|]/g,'');
+	var imageArrayList = imageList.split(",");
+	var resultString=""; 
+	for(var i = 0; i < imageArrayList.length;i++){ 
+		resultString+=imageArrayList[i]; 
+	} 
+	return resultString;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*---------------------- 拍照 start ----------------------*/
+/**
+ * 拍照事件
+ * */
+function cameraClick(){
+	var cameraOptions = { 
+			quality: 10,
+	        destinationType: navigator.camera.DestinationType.FILE_URL,//DATA_URL
+	        sourceType: navigator.camera.PictureSourceType.CAMERA 
+	    };
+		mam.navigator.camera.getPicture(onGetPictureSuccess, onGetPictureError, cameraOptions);	
+	/*mam.navigator.camera.getPicture(onGetPictureSuccess, onGetPictureError, {quality: 10});*/
+}
+
+/**
+ * 拍照返回成功函数
+ * */
+function onGetPictureSuccess(imageData) {
+    appUpload(imageData);
+}
+
+/**
+ * 返照返回失败函数
+ * */
+function onGetPictureError(cameraError) {
+//	mam.navigator.notification.alert("拍照失败:"+cameraError);
+    console.log("onError() cameraError:" + cameraError);
+}
+/*---------------------- 拍照     end  ----------------------*/
+
+/*---------------------- 文件上传到数据库   start old  ----------------------*/
+/**
+ * 文件上传
+ * */
+function appUpload(imageData){
+    var filePath = imageData;
+    var devicePlatform = device.platform;
+    filename=imageData.substring(imageData.lastIndexOf('/')+1,imageData.length);
+    if("Android" == devicePlatform){
+        if(imageData.indexOf("file:///storage/emulated/0")==-1){
+            filePath = imageData.replace("file:///storage/sdcard0", "/sdcard");
+        }else{
+            filePath = imageData.replace("file:///storage/emulated/0", "/sdcard");
+        }
+    }
+
+    if("iOS" == devicePlatform){
+        filePath = imageData.replace("file:///", "/");
+    }
+
+    picPath=filePath;
+    executeCompress(picPath);
+	document.getElementById('sourceUrl').value = picPath;
+}
+
+/**
+ * 压缩图片		原生相机使用
+ * */
+function executeCompress(filePath) {
+	alert("上传   filePath         "+filePath);
+    mam.navigator.ContentCompression.getSmallPicture(function(obj){
+		 alert("上传            "+obj.result);		
+		document.getElementById('sourceUrl').value = obj.result;
+    }, function(dlFileTransferError){
+    	mam.navigator.notification.alert("压缩文件失败!");
+    }, filePath,800);
+}
+
+/**
+ * 压缩文件上传成功函数
+ * */
+function successUploadPICCallback(obj) {
+	
+	var jsonObj = JSON.parse(obj);
+	var fjId = jsonObj.file_id;
+/*	old
+    var fjId = obj.toString();*/
+    var fileId = "FILE_"+fjId;
+    
+    //将上传后的文件展示到页面中
+  //  appendImgFun(fjId,picPath);
+    
+//    if(sessionStorage.appendName!=""&&sessionStorage.appendName!=null){
+//    	//显示图片
+//        $('<div id="'+fjId+'" class="baseImg"><img id="'+fileId+'" src="' + picPath + '"  onclick="fileClick(event)" "></div>').appendTo(sessionStorage.appendName);
+//    }else{
+//    	//显示图片
+//        $('<div id="'+fjId+'" class="baseImg"><img id="'+fileId+'" src="' + picPath + '"  onclick="fileClick(event)" "></div>').appendTo('.cameraImgList');
+//    }
+    
+}
+/**
+ * 压缩文件失败函数
+ * */
+function errCallback(obj) {
+	//mam.navigator.notification.alert("文件上传失败,请稍后重试!");
+	layer.msg('文件上传失败,请稍后重试!');
+	
+}
+/*---------------------- 文件上传到数据库   end  ----------------------*/
+
+
+
+
+
+
+
+ </script>
+</head>
+<body onload="onLoad()">
+	<br>
+		<br>
+			<br>
+				<br>
+<div>
+
+<span>** ① 自定义 文件下载***<span><br><br>
+<input type='button' onclick="executeGoToScanPager()"  value='资源生成二维码 快速扫码填入信息'></input>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+<textarea   rows="5" cols="40" id='diyUrl' placeholder='输入文件URL'></textarea><br><br>
+<input type='texinput' size="30"  id='diyName' placeholder='输入文件名称 【必填 带后缀】'></input><br><br>
+
+<input type='button' onclick="diyDownload()"  value='下载'></input>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+<input type='button' onclick="diybd()" value='本地打开'></input>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type='button' onclick="diyzx()" value='在线打开doc '></input><br><br>
+<input type='button' onclick="removefiles('SYSCS',['1_diyFile'])" value='删除'></input><br><br>
+
+
+<br><br>
+<span>** ② 服务端  资源  上传 ***<span><br><br>
+<input type='button' onclick="takePhotoNew()" value='拍照'/>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type='button' onclick="imageSelect()" value='照片多选'/>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type='button' onclick="cameraClick()" value='原生拍照'/>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+
+
+<textarea   rows="5" cols="40" id='sourceUrl' placeholder='资源路径  拍照或多选后，再上传。'></textarea><br><br>
+
+<input type='button' onclick="appServerUpload('upload6')" value='单文件上传	【appServerUpload 推荐】'/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+<input type='button' onclick="fileUploads('upload8')" value='多文件上传	【fileUploads 推荐 IOS不支持】'/><br><br><br><br>
+
+
+
+
+<span>** ③ 服务端  资源  展示 ***<span><br>
+<input type='button' onclick="getFileListF()" value='获取服务端文件清单'/>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type='button' onclick="getFileInfo('SYSCS')" value='获取本地文件清单'/>&nbsp;&nbsp;&nbsp;&nbsp;<br><br>
+
+<div id="showFile"></div><br><br>
+
+
+
+
+<span>****  图片预览   ****<span><br>
+<img id='downloadImage'/><br><br>
+
+
+
+<span>** ④ 下载图片 保存本地  预览  推荐 ***<span><br><br>
+<input type='button' onclick="imageDownload(image1)"  value='下载图片'></input>&nbsp;&nbsp;&nbsp;&nbsp;
+<input type='button' onclick="preview(mobile.png)"  value='预览本地'></input><br><br>
+<input type='button' onclick="removefile('SYSCS','mobile.png')" value='删除'></input><br><br><br>
+
+
+
+
+<span>** ⑤ 下载zip 解压    推荐  ************<span><br><br>
+<input type='button' onclick="downloadZIP(zip2M)"  value='下载zip'></input><br><br>
+<input type='button' onclick="decompression(1_zip.zip)"  value=' 解压ZIP'></input><br><br>
+	<input type='button' onclick="removefiles('SYSCS',['1_zip'])" value='删除'></input><br><br>
+
+<div>
+	<br>
+	<!--<input type='button' onclick='openFileManage()' value='打开下载管理界面'></input><br><br> -->
+<!--
+<span>*********  应用 SYSCS ************<span><br>
+	<input type='button' onclick="mediaDownload('1','1')" value='mp4下载 测试MP4_1.mp4 '></input>
+	<input type='button' onclick="removefile('SYSCordova1','测试MP4_1.mp4')" value='删除'></input>
+	<input type='button' onclick="pauseDown('1','1')" value='暂停'></input><br><br>
+	<input type='button' onclick="mediaDownload('2','1')" value='mp4下载 测试MP4_2.mp4 '></input>
+	<input type='button' onclick="removefile('SYSCordova1','测试MP4_2.mp4')" value='删除'></input><br><br>
+
+	<input type='button' onclick="removefiles('SYSCordova1',['SYSCordova_media_1'])" value='批量删除'></input><br><br>
+	<input type='button' onclick="getFileInfo('SYSCordova1')" value='获取mp4信息 1'></input><br><br>
+
+-->
+
+<span>*********  ⑥ 文档下载     ************<span><br>      
+	<input type='button' onclick="downloadDOC(doc22b)" value='doc下载 1_doc_22b_文档 '></input><br><br>
+	<input type='button' onclick="openFile('1_doc_22b_文档.doc')" value='本地打开doc '></input><br><br>
+
+
+
+	<input type='button' onclick="openFile(doc22b)" value='在线打开doc '></input><br><br>
+	<input type='button' onclick="removefile('SYSCS','1_doc_22b_文档.doc')" value='删除'></input><br><br><br><br><br>
+
+
+
+
+	<input type='button' onclick="downloadPDF(pdf21M)" value='PDF下载 1_pdf_21M '></input>&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type='button' onclick="pauseDown(pdf21M)" value='暂停'></input><br><br>
+
+	<input type='button' onclick="openFile('1_pdf_21M.pdf')" value='本地打开PDF '></input><br><br>
+	<input type='button' onclick="openFile(pdf21M)" value='在线打开PDF '></input><br><br>
+	<input type='button' onclick="removefile('SYSCS','1_pdf_21M.pdf')" value='删除'></input><br><br><br>
+
+
+	<div id="myProgress">
+	  <div id="myBar"></div>
+	</div><br><br>
+
+	<input type='button' onclick="removefiles('SYSCS',['1_pdf','1_doc','1_image'])" value='批量删除'></input><br><br>
+	<input type='button' onclick="getFileInfo('SYSCS')" value='获取文件信息'></input><br><br>
+
+<span>** ⑦ 原生文件系统 2020-7-31   ************<span><br><br>
+		
+<input accept='file/*' type='file'>文件系统</input><br><br>
+
+<input id="fileId1" type="file" accept="image/png,image/gif" name="file" >文件系统 222</input><br><br>
+<input id="fileId2" type="file" accept="application/msword" name="file" >文件系统   文档</input><br><br>
+
+<input class="js_upFile cover1" type="file" name="cover" accept="image/*" capture="camera" multiple>兼容 IOS的写法</input>
+
+<br><br>
+<span>*********  文件下载 老方法 不推荐   ************<span><br>
+	
+	<input type='button' onclick='fileDownloadOld()' value='下载文件'></input>	   
+    <input type='button' onclick='openDocOld()' value='打开文件'></input>
+<br>
+
+<span>*********  下载zip 解压   不推荐  ************<span><br><br>
+<input type='button' onclick="sddownloadZIP()"  value='下载zip'></input><br><br>
+<input type='button' onclick="decompression(1_zip.zip)"  value=' 解压ZIP'></input><br><br>
+	<br>
+	<br>
+<br>
+
+<span>*********  下载图片 保存本地  预览  不推荐 ************<span><br><br>
+<input type='button' onclick="sddownload()"  value='下载图片'></input><br><br>
+<span>*********  预览   ************<span><br>
+<img id='sdimage'/><br><br>
+
+
+
+
+</body>
+</html>
+
+
+

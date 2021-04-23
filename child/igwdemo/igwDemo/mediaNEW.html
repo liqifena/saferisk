@@ -1,0 +1,885 @@
+<html>
+<head>
+<meta content="width=device-width,user-scalable=no" name="viewport">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>实验室-多媒体</title>
+<style type="text/css">
+<!--
+.STYLE1 {
+	color: #FFFFFF;
+	font-size: 17px;
+	font-family: "黑体";
+}
+.STYLE2 {
+	color: #FFFFFF;
+	font-family: "黑体";
+	font-size: 20px;
+	
+}
+.bkzx {
+	height: 25px;
+	width: 150px;
+	border: 1px solid #8BBABB;
+	color: #0A7E81;
+	font-family: "Adobe 黑体 Std R";
+	font-size: 16px;
+}
+.bkza {
+	height: 80px;
+	width: 100%;
+	border: 1px solid #8BBABB;
+	border-sizing:box-border;
+}
+-->
+</style>
+<link href="css/css.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+body {
+	background-color: #E8F6F7;
+	margin-left: 0px;
+	margin-top: 10px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+.STYLE5 {font-family: "黑体"; font-size: 16px; }
+.STYLE6 {font-family: "黑体"}
+-->
+</style>
+<!--jquery 切换标签-->
+<script src="js/jquery-3.3.1.js"></script>
+
+<!--引入cordova.js文件-->
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<!--引入这个事修改某些js变量的命名空间-->
+<script src="js/public.js"></script>
+
+
+<!--cordova相关操作的js代码-->
+	<script src="js/vconsole.min.js"></script>
+
+    <script type="text/javascript">
+	var vConsole = new VConsole();
+
+	//标识cordova环境是否准备好,初始值为false,当cordova环境加载好后此值设定成true
+	//cordova相关的js方法调用时判断此变量
+	var deviceReady = false;
+	
+	//判断是否为空[可根据此为标志位]
+	//null:表示未播放
+	//非空:正在播放
+	var thatMedia = null;
+	
+	var mediaTimer = null;
+	
+	//页面加载时执行
+    function onLoad(){
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }
+    
+    function onDeviceReady() {
+    	//alert("onDeviceReady()--->start()");
+  		deviceReady = true;
+  		console.log("onDeviceReady()--->end()");
+  	}
+  	
+  	//由于在Android平台上和在IOS平台上打开文件执行的不一样，所以在这边加上了具体的平台判断
+	//IOS:调用照片库，返回文件
+	//Android:调用自己写插件，通过自己写的插件，调用自己写的原生浏览文件的一个Activity浏览文件返回指定路径
+	function executeOpenFile(){
+		console.log(" executeOpenFile()-->start");
+    	if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+			executeOpenFileByIOS();
+		}else if("Android" == devicePlatform){
+			executeOpenFileByAndroid();
+		}else{
+			console.log("invaiate platform");
+		}
+	}
+		
+	//为Android平台时打开文件执行的操作[自己写的插件，打开自己写的本地应用此应用显示系统文件信息，用户选择后带回文件信息]
+	function executeOpenFileByAndroid(){
+		console.log("executeOpenFileByAndroid()-->start");
+		mam.navigator.forward.goToFileExplorer(successCallback,null,DLForwardConstants.FileExplorer.ACTION_OPEN_MEDIA_FILE);
+    	function successCallback(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+	
+	//为IOS平台时，执行打开文件时操作
+	function executeOpenFileByIOS(){
+		alert("executeOpenFileByIOS()-->start");
+		mam.navigator.selectMusic.getLocalFile(successCallback,errorCallback);
+		function successCallback(filePath){
+    		console.log("successCallback() filePath:" + filePath);
+    		document.getElementById('file').value = filePath;
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+	
+	var oldPath = "";
+	function playAudio(){
+		//判断cordova环境是否加载好,如果未加载好，直接退出
+		if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		
+		//清空错误信息
+		document.getElementById('errorMsg').value = "";
+		
+    	var path = document.getElementById('file').value;		
+		
+		if('' == path){
+			document.getElementById('errorMsg').value = "播放路径为空";
+			return;
+		}
+		
+
+		//播放对象为null 或 选择新的播放文件时new,其他情况保持现有对象，用于暂停功能
+		if(null == thatMedia || oldPath != path){
+			thatMedia = new Media(path, onSuccess, onError,onStatusCallback);
+			oldPath = path;
+		}	
+		
+		//设定音量[取值范围从0.0-1.0之间,输入字符到底层需要类型转换的，如果不符合要求类型转换会错误]
+		thatMedia.setVolume('1.0');
+		var totalProgress = thatMedia.getDuration();
+		document.getElementById('totalProgress').value = totalProgress + "秒";
+		
+		thatMedia.play();
+		//另个对象执行播放时，定时器停止
+		if(null != mediaTimer){
+			clearInterval(mediaTimer);
+        	mediaTimer = null;
+		}
+		
+		//设定定时器,每隔n毫秒执行一次其中回调
+		mediaTimer = setInterval(function() {
+			console.log("timer...");
+			if(null == thatMedia){
+				return;
+			}
+        	thatMedia.getCurrentPosition(
+            // success callback
+               function(position) {
+                	if (position > -1) {
+                    	//console.log((position) + " sec");
+                		document.getElementById('currentProgress').value = position + "秒";
+                	}
+            	},
+            	// error callback
+            	function(e) {
+                	console.log("Error getting pos=" + e);
+            	}
+        	);
+    	  }, 1000);
+		
+		
+		//播放成功的回调
+		function onSuccess(){	
+			 console.log("play success...");
+		}
+		
+		//播放失败的回调[根据错误码显示错误消息]
+		function onError(mediaError){
+			var errorCode = mediaError.code;
+			//获取错误消息
+			var errorMsg = showMediaErrorMsg(errorCode);
+			thatMedia = null;
+			document.getElementById('errorMsg').value = errorMsg;
+		}
+		
+		//根据底层的错误码,返回错误消息
+		function showMediaErrorMsg(errorCode){
+			var errorMsg = "";
+			if(MediaError.MEDIA_ERR_ABORTED == errorCode){
+				errorMsg = "终止";
+			}else if(MediaError.MEDIA_ERR_NETWORK == errorCode){
+				errorMsg = "网络错误";
+			}else if(MediaError.MEDIA_ERR_DECODE == errorCode){
+				errorMsg = "解码错误";
+			}else if(MediaError.MEDIA_ERR_NONE_SUPPORTED == errorCode){
+				errorMsg = "没有被提供";
+			}
+			return errorMsg;
+		}
+		
+		function onStatusCallback(result){
+			console.log("onStatusCallback() result:" + result);
+			document.getElementById('currentStatus').value = showStatus(result);
+		}
+		
+		//显示播放的状态
+		function showStatus(result){
+			var r = "";
+			if(result == Media.MEDIA_NONE){
+				r = "none";
+			}else if(result == Media.MEDIA_STARTING){
+				r = "开始";
+			}else if(result == Media.MEDIA_RUNNING){
+				r = "正在播放";
+			}else if(result == Media.MEDIA_PAUSED){
+				r = "暂停";
+			}else if(result == Media.MEDIA_STOPPED){
+				r = "停止";
+			}
+			return r;
+		}
+	}
+	
+	//暂停播放
+	function pauseAudio(){
+		//判断cordova环境是否加载好,如果未加载好，直接退出
+		if(!deviceReady){
+    		console.log("pauseAudio()  Cordova is not ready,return");
+    		return;
+    	}
+	
+		 if (thatMedia) {
+            thatMedia.pause();
+         }
+	}
+	
+	//停止播放
+	//停止播放时，thatMedia被设定为空
+	function stopAudio() {
+		//判断cordova环境是否加载好,如果未加载好，直接退出
+		if(!deviceReady){
+    		console.log("stopAudio()  Cordova is not ready,return");
+    		return;
+    	}
+		
+    	if (thatMedia) {
+        	thatMedia.stop();
+        	//释放媒体资源
+        	thatMedia.release();
+            thatMedia = null;
+        }
+        
+        //计时器停止
+        if(null != mediaTimer){  
+        	clearInterval(mediaTimer);
+        	mediaTimer = null;
+        }
+      
+    }
+	
+	
+	//清除掉其中的数据
+	function executeClear(){
+		//清除文件输入中的信息
+		document.getElementById('file').value = "";
+	}
+	
+	//清除所有信息
+	//1:文件输入框
+	//2:状态框
+	//3:错误消息框
+	function executeAllClear(){
+		//清除文件输入中的信息
+		document.getElementById('file').value = "";
+		document.getElementById('currentStatus').value = "";
+		document.getElementById('errorMsg').value = "";
+	}
+	
+	//在录制界面创建临时要生产的文件路径
+	function createTempFilePath(){
+		//获取当前时间[时间戳对象]
+	    var timeStamp = Date.parse(new Date());
+		//获取设备平台
+		var devicePlatform = device.platform;
+		var path = "";
+		if("iOS" == devicePlatform){
+			path = "record_" + timeStamp + ".wav";
+		}else if("Android" == devicePlatform){
+			path = "record_" + timeStamp + ".aac";
+		}else{
+			console.log("invaiate devicePlatform...");
+		}		
+		document.getElementById('recordFile').value = path;
+	} 
+	
+	/***********************************播放播放音频      开始*******************************/
+
+	//为Android平台时打开文件执行的操作[自己写的插件，打开自己写的本地应用此应用显示系统文件信息，用户选择后带回文件信息]
+
+		function executeOpenFileByAAC(){
+		console.log(" executeOpenFile()-->start");
+    	if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+			executeOpenFileByIOSByPlayAAC();
+		}else if("Android" == devicePlatform){
+			console.log("Android");
+			executeOpenFileByAndroidByPlayAAC();
+		}else{
+			console.log("invaiate platform");
+		}
+	}
+
+	function executeOpenFileByAndroidByPlayAAC(){
+		console.log("executeOpenFileByAndroidPlayAAC()-->start");
+		mam.navigator.forward.goToFileExplorer(successCallbackPlayAAC,null,DLForwardConstants.FileExplorer.ACTION_OPEN_MEDIA_FILE);
+    	function successCallbackPlayAAC(filePathPlayAAC){
+    		console.log("successCallback() filePathPlayAAC:" + filePathPlayAAC);
+			
+			document.getElementById('fileAACHTMLI').value = filePathPlayAAC;
+			document.getElementById("fileAACHTML").src=filePathPlayAAC;
+
+			console.log(document.getElementById("fileAACHTML").src);
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+		//为IOS平台时，执行打开文件时操作
+	function executeOpenFileByIOSByPlayAAC(){
+		alert("executeOpenFileByIOSByPlayAAC()-->start");
+		//mam.navigator.selectMusic.getLocalFile(successCallbackByPlayAAC,errorCallbackByPlayAAC);
+		mam.navigator.selectMusic.getLocalFile(successCallbackByPlayAAC,errorCallbackByPlayAAC);
+		function successCallbackByPlayAAC(filePathByPlayAAC){
+			document.getElementById('fileAACHTMLI').value = filePathByPlayAAC;
+			document.getElementById("fileAACHTML").src=filePathByPlayAAC;
+
+			console.log(document.getElementById("fileAACHTML").src);
+    	}
+    	
+    	function errorCallbackByPlayAAC(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+
+
+
+
+var oldAACPath = "";
+	function playAAC(){
+		//判断cordova环境是否加载好,如果未加载好，直接退出
+		if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+
+	
+    	var pathAAC = document.getElementById('fileAAC').value;		
+		
+		console.log("playMedia  "+pathAAC);
+		  // Play the audio file at url
+		  var my_AAC = new Media(pathAAC,
+        // success callback
+        function () {
+			console.log("playAudio():Audio Success");
+            console.log("playAudio():Audio Success");
+        },
+        // error callback
+        function (err) {
+			console.log("playAudio():Audio Error: " + err);
+            console.log("playAudio():Audio Error: " + err);
+        }
+    );
+    // Play audio
+	console.log("playAudio");
+    my_AAC.play();
+
+
+		
+	}
+
+	function pauseAAC()
+	{
+	}
+
+	function stopAAC()
+	{
+	}
+
+
+/***********************************播放音频     结束*******************************/
+ 
+/***********************************播放视频     开始*******************************/
+
+	//为Android平台时打开文件执行的操作[自己写的插件，打开自己写的本地应用此应用显示系统文件信息，用户选择后带回文件信息]
+
+		function executeOpenFileByMedia(){
+		console.log(" executeOpenFile()-->start");
+    	if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取设备平台
+		var devicePlatform = device.platform;
+		console.log(" executeOpenFile() ,devicePlatform:" + devicePlatform);
+		if("iOS" == devicePlatform){
+			executeOpenFileByIOSByMedia();
+		}else if("Android" == devicePlatform){
+			console.log("Android");
+			executeOpenFileByAndroidByPlayMedia();
+		}else{
+			console.log("invaiate platform");
+		}
+	}
+
+			//为IOS平台时，执行打开文件时操作
+	function executeOpenFileByIOSByMedia(){
+		console.log("executeOpenFileByIOSByMedia()-->start");
+		mam.navigator.selectMusic.getLocalFile(successCallbackByMedia,errorCallbackByMedia);
+		function successCallbackByMedia(filePathByMedia){
+			document.getElementById('fileAACHTMLI').value = filePathByMedia;
+			document.getElementById("fileAACHTML").src=filePathByMedia;
+
+			console.log(document.getElementById("fileAACHTML").src);
+    	}
+    	
+    	function errorCallbackByMedia(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+
+	function executeOpenFileByAndroidByPlayMedia(){
+		console.log("executeOpenFileByAndroidPlayMedia()-->start");
+		mam.navigator.forward.goToFileExplorer(successCallbackPlayMedia,null,DLForwardConstants.FileExplorer.ACTION_OPEN_MEDIA_FILE);
+    	function successCallbackPlayMedia(filePathPlayMedia){
+    		console.log("successCallback() filePathPlayMedia:" + filePathPlayMedia);
+			
+			document.getElementById('fileMediaHTMLI').value = filePathPlayMedia;
+			document.getElementById("fileMediaHTML").src=filePathPlayMedia;
+
+			console.log(document.getElementById("fileMediaHTML").src);
+    	}
+    	
+    	function errorCallback(msg){
+    		console.log("errorCallback() msg:" + msg);
+    	}
+	}
+
+
+
+
+var oldMediaPath = "";
+	function playMedia(){
+		//判断cordova环境是否加载好,如果未加载好，直接退出
+		if(!deviceReady){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+
+				//清空错误信息
+	//	document.getElementById('errorMsgMedia').value = "";
+		
+    	var pathMedia = document.getElementById('fileMedia').value;		
+		
+	//	if('' == pathMedia){
+			//document.getElementById('errorMsgMedia').value = "播放路径为空";
+	//		return;
+	//	}
+		
+
+		//播放对象为null 或 选择新的播放文件时new,其他情况保持现有对象，用于暂停功能
+	//	if(null == thatMedia || oldPath != path){
+		//	thatMedia = new Media(path, onSuccess, onError,onStatusCallback);
+		//	oldPath = path;
+//		}
+
+		console.log("playMedia  "+pathMedia);
+		  // Play the audio file at url
+		  var my_media = new Media(pathMedia,
+        // success callback
+        function () {
+			console.log("playAudio():Audio Success");
+            console.log("playAudio():Audio Success");
+        },
+        // error callback
+        function (err) {
+			console.log("playAudio():Audio Error: " + err);
+            console.log("playAudio():Audio Error: " + err);
+        }
+    );
+    // Play audio
+	console.log("playAudio");
+    my_media.play();
+
+
+		
+	}
+
+	function pauseMedia()
+	{
+	}
+
+	function stopMedia()
+	{
+	}
+
+
+/***********************************播放视频     结束*******************************/
+
+
+	//全局变量，用于开始和停止录制
+	var mediaRec;
+	
+	//开始录制音频
+	function startRecordAudio(){
+		var path;
+		
+		if(!deviceReady){
+    		console.log("startRecordAudio()  Cordova is not ready,return");
+    		var result = "cordova 环境没有准备好,退出...";
+    		printOnResultMsg2(result);
+    		return;
+    	}
+    	
+    	//判断路径，路径为空直接返回
+		path = document.getElementById('recordFile').value;
+		if("" == path){
+			var result = "startRecordAudio()  Cordova is not ready,return";
+			console.log(result);
+			printOnResultMsg2(result);
+			return;
+		}
+		
+		//判断原来的有没释放掉,没释放的话这边释放[用户连续多次点击，会释放掉原来的的重新初始化]
+		if(null != mediaRec){
+			mediaRec.stopRecord();
+			mediaRec.release();
+			mediaRec = null;
+		}
+		
+		//点击录制按钮录制时，先清除掉"当前状态"文本框,"执行结果文本框"
+		document.getElementById('currentStatus2').value = "";
+		//此组件上清空
+		printOnResultMsg2("");
+		
+		//初始化对象
+		mediaRec = new Media(path,successCallback,errorCallback,onStatusCallback);
+		//开始录制
+		mediaRec.startRecord();
+		
+		//录制成功的回调
+		function successCallback(){
+		   console.log("recordAudio():Audio Success");		   
+		   var result = "录制成功,录制后文件存放在sd卡下,文件名为:" + path;		   
+		   printOnResultMsg2(result);
+		}
+		
+		//录制失败的回调
+		function errorCallback(mediaError){
+			console.log("recordAudio():Audio Error: "+ mediaError.code);
+			var result = "录制操作发生错误，错误码 "+ mediaError.code + ",错误原因为:" +  mediaError.message;
+			printOnResultMsg2(result);
+		}
+		
+		//状态改变时发生的回调
+		function onStatusCallback(result){
+			console.log("onStatusCallback() result:" + result);
+			document.getElementById('currentStatus2').value = showStatus(result);
+		}
+		
+		//显示录制操作的状态
+		function showStatus(result){
+			var r = "";
+			if(result == Media.MEDIA_NONE){
+				r = "none";
+			}else if(result == Media.MEDIA_STARTING){
+				r = "开始";
+			}else if(result == Media.MEDIA_RUNNING){
+				r = "正在录制";
+			}else if(result == Media.MEDIA_PAUSED){
+				r = "暂停";
+			}else if(result == Media.MEDIA_STOPPED){
+				r = "录音完成";
+			}
+			return r;
+		}
+	}
+	
+	function printOnResultMsg2(resultMsg){
+		document.getElementById('resultMsg2').value = resultMsg;
+	}
+	
+	//停止录制
+	function stopRecordAudio(){
+		//环境未加载好，这边直接退出
+		if(!deviceReady){
+    		console.log("stopRecordAudio()  Cordova is not ready,return");
+    		return;
+    	}
+	
+		console.log("stopRecordAudio()--(null != mediaRec):" + (null != mediaRec));
+		
+		//判断对象是否存在，如果存在则释放
+		if(null != mediaRec){
+			mediaRec.stopRecord();
+			mediaRec.release();
+			mediaRec = null;
+		}
+	}
+	
+	//在录制面板上，清除选中的录制的文件
+	function executeClearOnTabRecord(){
+		document.getElementById('recordFile').value = "";
+	}
+	
+	//在录制面板上清除所有信息
+	//1:文件输入框
+	//2:状态框
+	//3:错误消息框
+	function executeAllClearOnTabRecord(){
+		//清除文件输入中的信息
+		document.getElementById('recordFile').value = "";
+		document.getElementById('currentStatus2').value = "";
+		//清除其中的数据
+		printOnResultMsg2("");
+	}
+	
+	//开始录制音频_新插件
+	function newstartRecordAudio(){
+		var path;
+		
+		if(!deviceReady){
+    		console.log("startRecordAudio()  Cordova is not ready,return");
+    		var result = "cordova 环境没有准备好,退出...";
+    		printOnResultMsg2(result);
+    		return;
+    	}
+		
+		//点击录制按钮录制时，先清除掉"当前状态"文本框,"执行结果文本框"
+		document.getElementById('currentStatus2').value = "";
+		//此组件上清空
+		printOnResultMsg2("");
+		
+		//开始录制
+		console.log("aac 音频录制 开始 ");
+		mam.navigator.audio.startRecordAudio(successCallback,errorCallback);
+		
+		//录制成功的回调
+		function successCallback(data){
+			console.log("aac 音频录制 中 ");
+		}
+		
+		//录制失败的回调
+		function errorCallback(data){
+			console.log("recordAudio():Audio Error: "+ data);
+			var result = "录制操作发生错误，错误码 "+ data + ",错误原因为:" +  data;
+			printOnResultMsg2(result);
+		}
+		
+		//状态改变时发生的回调
+		function onStatusCallback(){
+			document.getElementById('currentStatus2').value = "正在录制";
+		}
+	}
+	//停止录制_新插件
+	function newstopRecordAudio(){
+		//环境未加载好，这边直接退出
+		if(!deviceReady){
+    		console.log("stopRecordAudio()  Cordova is not ready,return");
+    		return;
+    	}
+	
+		//停止录制
+		console.log("aac 音频录制 停止 ");
+		mam.navigator.audio.finishRecordAudio(successCallback,errorCallback);
+		
+		//录制成功的回调
+		function successCallback(data){
+			console.log("aac 音频录制 结束，录制成功。");		   
+		   console.log("aac 音频录制 结束，录制成功。录制后文件存放在sd卡下,文件名为:" + data);
+		   printOnResultMsg2(result);
+		}
+		
+		//录制失败的回调
+		function errorCallback(data){
+			console.log("recordAudio():Audio Error: "+ data);
+			var result = "录制操作发生错误，错误码 "+ data + ",错误原因为:" +  data;
+			printOnResultMsg2(result);
+		}
+	}
+	
+	
+	/**
+
+		录制 音频 aac格式
+		开始录音
+		参数说明：
+			onSuccess	成功回调
+			onError		失败回调
+			filePath	文件路径  (无意义 待优化)
+
+	**/
+	function startRecordAudio(){
+		console.log("test()--->start()");
+		if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			return;
+		}
+		alert("startRecordAudio");
+		var filePath="/aacUrl";
+		//使用这边调用可以获取本地通讯录
+		mam.navigator.audio.startRecordAudio(startonSuccess,startonError,filePath);
+		
+		function startonSuccess(data){
+			console.log("onSuccess() data:" + data);
+		}
+		
+		//参数为string类型
+		function startonError(data){
+			console.log("onError() data:" + data);
+		}
+		console.log("test()--->end()");
+	}
+	/**
+
+	录制 音频 aac格式
+	结束录音
+	参数说明：
+		onSuccess	成功回调
+		onError		失败回调
+	**/
+	function finishRecordAudio(){
+		console.log("test()--->start()");
+		if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			return;
+		}
+		alert("finishRecordAudio");
+		mam.navigator.audio.finishRecordAudio(finishonSuccess,finishonError);
+		
+		function finishonSuccess(data){
+			document.getElementById("fileAACUrl").value=data;
+			
+			document.getElementById("aacAudio").src=data;
+			console.log("onSuccess() data:" + data);
+		}
+		function finishonError(data){
+			console.log("onError() data:" + data);
+		}
+		console.log("test()--->end()");
+	}
+
+</script>
+
+<!--jquery中切换标签函数-->
+<script type="text/javascript">
+	//标签切换函数
+	function show(v){
+		if(v==0){
+			$('#tb0').show();
+			$('#tbh0').css('background','#efefef');
+			$('#tb1').hide();
+			$('#tbh1').css('background','');
+			$('#tb2').hide();
+			$('#tbh2').css('background','');
+			$('#tb3').hide();
+			$('#tbh3').css('background','');
+
+		}else if(v==3){
+			$('#tb3').show();
+			$('#tbh3').css('background','#efefef');
+			$('#tb1').hide();
+			$('#tbh1').css('background','');
+			$('#tb0').hide();
+			$('#tbh0').css('background','');
+			$('#tb2').hide();
+			$('#tbh2').css('background','');
+		}
+	}
+</script>
+</head>
+<body onload="onLoad()">
+<div>
+	<div id="tbh0" onclick="show(0)" style="float:left;width:150px;height:40px;line-height:40px;text-align:center;border:1px solid #ccc;background:#efefef;font-size:14px;">aac 音频录制</div>
+</div>
+
+
+
+
+
+
+<div id="tb0">
+	<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" >
+	<tr height="30"><td></td></tr>
+		<tr height="30">
+			<td height="30"  width="350">
+	<div id="tbh0" onclick="startRecordAudio()" style="float:left;width:150px;height:40px;line-height:40px;text-align:center;border:1px solid #ccc;background:#efefef;font-size:14px;">开始 aac 音频录制</div>			
+			</td>
+			<td height="30"  width="350">
+	<div id="tbh0" onclick="finishRecordAudio()" style="float:left;width:150px;height:40px;line-height:40px;text-align:center;border:1px solid #ccc;background:#efefef;font-size:14px;">结束 aac 音频录制</div>
+</div>			
+			</td>
+			
+		</tr>
+	
+	</table>
+</div>
+
+<div id="tb0">
+	<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" >
+		<tr height="30">
+			<td height="30"  width="350">
+				文件路径:<input id="fileAACUrl" name="fileAAC" type="text" class="bk"  size="30" readonly="true">				
+			</td>
+		</tr>
+		<tr width="100%" height="100%" >
+			<td align="center" valign="top">
+				<audio  id="aacAudio"  width="350" height="100%" type="video/mp4" src=""  controls="controls"></audio>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+<div>
+	<div id="tbh0" onclick="show(0)" style="float:left;width:150px;height:40px;line-height:40px;text-align:center;border:1px solid #ccc;background:#efefef;font-size:14px;">(音/视)频文件播放</div>
+</div>
+
+<div id="tb0">
+	<table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" >
+		<tr>
+			<td bgcolor="#0A7E81">
+				<table width="100%" border="0" cellpadding="0" cellspacing="0" onclick="executeOpenFileByAAC()">
+					<tr>
+						<td width="26%" height="60" align="right"><img src="images/media_titleIcon.png" width="55" height="50"></td>
+						<td width="74%"><span class="STYLE1">　请选择要播放的文件</span></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td><span class="STYLE6">  </span></td>
+		</tr>
+		<tr height="30">
+			<td height="30"  width="350">
+				文件路径:<input name="fileAACHTMLI" type="text" class="bk" id="fileAACHTMLI" size="30" readonly="true">				
+			</td>
+		</tr>
+		<tr width="350" height="380" >
+			<td align="center" valign="top">
+				<video id="fileAACHTML"  width="350" height="380" type="video/mp4" src="" controls></video>
+			</td>
+		</tr>
+	</table>
+</div>
+</body>
+</html>

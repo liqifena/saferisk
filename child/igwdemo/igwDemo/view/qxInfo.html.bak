@@ -1,0 +1,228 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>企信头像/通讯录</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html;">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+	<script type="text/javascript" charset="utf-8" src="../public.js"></script>
+
+ 
+
+    <script type="text/javascript">
+			//mam引用
+			var mam = {navigator:navigator};
+			/**
+			*	名称：平台cordova加载
+			*	适用平台：移动门户 、电力一点通
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：无
+			*	回调说明：
+			*		无
+			*		无
+			*	方法说明：
+			*		页面加载时执行onLoad方法，
+			*		deviceReady 标识cordova环境是否准备好,初始值为false
+			*		onDeviceReady 表示cordova加载完毕
+			**/
+			var deviceReady = false;
+			function onLoad(){
+				document.addEventListener("deviceready", onDeviceReady, false);
+				onDeviceReady();
+			}
+			function onDeviceReady() {
+				deviceReady = true;
+				alert("cordova加载完毕！");
+			}
+
+			/**
+			*	名称：打开企信群组
+			*	适用平台：移动门户 
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：无
+			*	回调说明：
+			*		successCallback2	无
+			*		errorCallback2		无
+			**/
+        function goGroupChat() {
+			mam.navigator.MultiuserChat.goGroupChat(successCallback2,errorCallback2)
+			}
+		function successCallback2() {
+			}
+		function errorCallback2() {			
+			}
+
+			/**
+			*	名称：获取企信未读消息
+			*	适用平台：移动门户 
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：无
+			*	回调说明：
+			*		successCallback1	无
+			*		errorCallback1		无
+			**/
+	    function getUnreadMessageNumber() {
+			mam.navigator.MultiuserChat.getUnreadMessageNumber(successCallback1,errorCallback1)
+			}
+
+			/**
+			*	名称：获取企信头像
+			*	适用平台：移动门户 
+			*	负责人：
+			*	开发日期：
+			*	版本：1.0
+			*	参数说明：
+			*			successCallbackInfo	成功回调
+			*			errorCallbackInfo	失败回调
+			*			JID		企信号 （用户amecode +	区域编号 例如 总部账号 yaofei01 即 yaofei01_sgcc）
+			*	
+			*	回调说明：
+			*			无
+			*			无
+			*	其他说明：
+			*			用户 namecode、区域编码 使用getUserInfo插件获取
+			*	
+			**/
+        function getQxAccount() 
+		{
+			mam.navigator.headportrait.getHeadPortrait(successCallbackInfo, errorCallbackInfo, "yaofei01_sgcc");
+		}
+		//执行成功回调
+		function successCallbackInfo(objInfo) 
+		{
+			var ss = "data:image/jpeg;base64," + objInfo.result;
+			console.log(objInfo.result);
+			console.log(ss);
+		   // $('#user_img').attr("src", "data:image/jpeg;base64," + ss);
+		   document.getElementById("getHeadPortraitImage").src= ss;
+		}
+		   //执行失败回调
+		function errorCallbackInfo(dlFileTransferError) 
+		{
+		}
+			/**
+			*	名称：获取手机通讯录
+			*	适用平台：移动门户 
+			*	负责人：
+			*	开发日期：2017-11-6
+			*	版本：1.0
+			*	参数说明：
+			*			sucCallback	成功回调			*	
+			*	回调说明：
+			*			无
+			*			无
+			*	其他说明：
+			*			
+			*	
+			**/
+        function getContact() 
+		{
+			mam.navigator.contactUtils.openContact(sucCallback);
+		}
+		//执行成功回调
+		function sucCallback(objInfo) 
+		{
+			//json = {"data":[{"uname":"tangbin","umobiles":["123","3323"]},{}] ,error:"suces"}
+			var json = eval("("+objInfo+")");
+			alert("通讯录："+json);			
+		}        
+/**
+
+【需要完善】：
+根据jid跳转至企信页面
+mam.navigator.chatpage.gotoChatPage(successCallback,errorCallback,jid);
+// 进入聊天页面
+function gotoChatPage(){
+		
+    console.log("gotoChatPage()-->start");    
+	navigator.chatpage.gotoChatPage(successCallback,errorCallback,"fengxuefeng_js@pubtest.js.sgcc.com.cn");
+
+	//执行成功回调    
+	function successCallback(obj){
+		 console.log("gotoChatPage() successed!");			
+	}		
+	
+	//执行失败回调
+	function errorCallback(dlFileTransferError){
+		console.log("gotoChatPage() failed!");    	  
+	}
+
+}
+
+//**********************************************************************************
+获取企信好友姓名和企信号
+navigator.chatpage.getAppJidAndName(successCallback,errorCallback);
+//获取企信好友列表
+function getJidName(){
+    console.log("getJidName()-->start");    
+	navigator.chatpage.getAppJidAndName(successCallback,errorCallback);
+
+	//执行成功回调    
+	function successCallback(obj){
+		 console.log("getJidName() successed!");		
+		 alert(JSON.stringify(obj.result));
+	}		
+	
+	//执行失败回调
+	function errorCallback(dlFileTransferError){
+		console.log("getJidName() failed!");    	  
+	}
+}
+
+//**********************************************************************************
+根据企信号jids获取对应好友统一框架id
+navigator.chatpage.getAppframeIdsByJIDs(successCallback,errorCallback,jids);
+//根据企信好友jids获取其相应统一框架id
+function getAppframeIdsByJIDs(){
+    console.log("getAppframeIdsByJIDs()-->start");    
+	navigator.chatpage.getAppframeIdsByJIDs(successCallback,errorCallback,"liruixuan_js,caozhen_js,zfw_js,hanyunrui_js,sunpx_js");
+
+	//执行成功回调    
+	function successCallback(obj){
+		 console.log("getAppframeIdsByJIDs() successed!");		
+		 alert(JSON.stringify(obj.result));
+	}		
+	
+	//执行失败回调
+	function errorCallback(dlFileTransferError){
+		console.log("getAppframeIdsByJIDs() failed!");    	  
+	}
+}
+
+
+**/
+
+    </script>
+</head>
+<body >
+  
+<div>
+  
+    <input type='button' onclick='getQxAccount()' value='企信头像'></input><br>
+
+	<img id="getHeadPortraitImage"  style="width: 100px;"><br>
+
+<!--    <input type='button' onclick='goGroupChat' value='获取企信未读消息'></input><br>-->
+
+<!--    <input type='button' onclick='goGroupChat' value='打开群组'></input><br>-->
+    </br>
+    </br>
+    </br>
+    <input type='button' onclick='getContact()' value='获取手机通讯录'></input><br>
+
+
+
+
+</div>
+</body>
+</html>
+
+
+

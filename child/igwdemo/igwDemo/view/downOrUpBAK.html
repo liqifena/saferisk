@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>下载/打开</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html;">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+ 
+	<script type="text/javascript" charset="utf-8" src="../cordova.js"></script>
+
+    <script type="text/javascript">
+
+		var mam = {navigator:navigator};
+		//标识cordova环境是否准备好,初始值为false
+		var deviceReady = false;
+		//页面加载时执行
+	    function onLoad(){
+		    document.addEventListener("deviceready", onDeviceReady, false);
+			onDeviceReady();
+	    }
+        // 移动交互平台加载完毕
+        function onDeviceReady() {
+			deviceReady = true;
+          //  alert("cordova加载完毕！");
+        }
+
+
+
+
+		
+function openFileManage()
+{
+	if(!deviceReady){
+			//执行到这边表示cordova环境没有准备好
+			alert('执行到这边表示cordova环境没有准备好');
+			return;
+		}
+	alert('openFileManage');
+	try{	
+	navigator.appfilemanage.open();
+	}catch(ex)
+	{
+		alert("try: "+ex.message);
+	}	
+}
+/**
+	fileUrl		文件路径【文件路径为平台指定路径】
+	fileStatus	0  未下载 1 下载中 3 下载成功	
+	filename	文件名称
+	fileSize		文件大小
+ 
+**/
+function getFileInfo(obj)
+{
+	alert(obj);
+	mam.navigator.appfilemanage.getFileInfo(getFileInfoCallback,obj);
+}
+function getFileInfoCallback(obj)
+{
+	alert(JSON.stringify(obj));	
+}
+/**文件上传
+function fileUpload()
+{
+	alert("建设中。。。");
+}**/
+/**
+	fileDownloadCallback	回调
+	appcode	 应用编码
+	appservercode	应用服务编码
+	urlType	下载类型（
+		0 白名单 1应用服务编码
+			0 无需传入appservercode，downloadUrl必填
+			1 无需传入downloadUrl，appservercode必填）
+	downloadUrl	文件下载地址
+	saveUrl		客户端文件保存地址（暂时为空）
+	filename	文件名称（保存本地文件名称）
+	appname		应用名称【文件名称与下载文件名称一致】
+	fileSize	文件大小 以 B(字节) 计算
+	fileStatus	文件状态：设置文件 0 允许打开  1 不允许打开
+	
+**/
+var mp4="https://mam1.ft-power.com.cn:10013/html4/download/xwlb.mp4";
+var mp4_http="http://mam1.ft-power.com.cn:10012/html4/download/xwlb.mp4";
+
+
+var aac="https://mam1.ft-power.com.cn:10030/aqscsj-web/aqscPicAction.do?method=downloadFjxx&UUID=123456";
+var aac_http="http://mam1.ft-power.com.cn:10029/aqscsj-web/aqscPicAction.do?method=downloadFjxx&UUID=123456";
+
+
+var doc="https://mamtj.sgcc.com.cn/mobile/health/getHealthReport.doc?report_id=ff8080815d8db82e015d8e75f8ee002c";
+var doc_http="http://mamtj.sgcc.com.cn/mobile/health/getHealthReport.doc?report_id=ff8080815d8db82e015d8e75f8ee002c";
+
+
+//mam.navigator.appfilemanage.fileDownload(fileDownloadCallback,appcode,'','0',downloadUrl,'/media','xwlb.mp4','实验室','2097152','0');
+
+//fileDownload('SYS',mp4,'/media','xwlb.mp4','实验室','1')
+//fileDownload('SYS',aac,'/aac','luyin.aac','实验室','0')
+//fileDownload('SYS',doc,'/media','test.doc','实验室','0')
+
+//fileDownload('SYSCS',mp4,'/mediaCS','gg.mp4','实验室(测试)','0')
+//fileDownload('SYSCS',aac,'/aacCS','cs.aac','实验室(测试)','1')
+//fileDownload('SYSCS',doc,'/docCS','wend.doc','实验室(测试)','0')
+
+function fileDownload(appcode,downloadUrl,saveUrl,filename,appname,fileStatus)
+{
+	alert(appcode+"  "+downloadUrl+"  "+saveUrl+"  "+filename+"  "+appname+"  "+fileStatus);
+	console.log("fileDownload    插件调用成功");
+	mam.navigator.appfilemanage.fileDownload(fileDownloadCallback,appcode,'','0',downloadUrl,saveUrl,filename,appname,'2097152',fileStatus);
+}
+
+
+function fileDownloadCallback(obj)
+{
+	console.log("fileDownload    插件调用  回调"+ obj);
+	alert(JSON.stringify(obj));
+}
+
+function removefile(appcode,filename)
+{
+	alert("应用编码 "+appcode+"应用名称 "+filename);
+	mam.navigator.appfilemanage.rmFile(rmcallback,appcode,filename);
+}
+function rmcallback(obj)
+{
+	alert(JSON.stringify(obj));
+}
+
+//***********************平台 下载 旧插件****************************
+
+var url = "https://mam1.ft-power.com.cn:10030/html8/word1.doc";
+var urlyjzh = "http://robocob.tp-ecp.com:8081/robocop-web/DownloadServlet;jsessionid=5K-CQ22HQoArLHCNVeSVHWVVEt62zrWYDENtqWSFm3mTK7KBtYvD!-1465857157?path=%2Ftest%2F49%2F201%2F9f14af95-a517-4612-8481-4c17cbba73da";
+
+
+		/**
+		插件参数说明：
+		url 应用配置白名单地址 （可以在网页中打开并下载文件）   
+			https://mam1.ft-power.com.cn:10013		平台环境域名访问地址
+			html4/download/xwlb.mp4		应用资源地址
+		 successCallback 成功回调 状态码见开发指南
+		 errorback 失败回调 状态码？
+		 "downdocument1/"  文件保存本地存储卡根目录
+		 "测试下载插件视频.mp4"  文件保存本地文件名称
+		 "SYS"		应用编码
+		 "DOWNVIDEO"		应用服务编码
+		*/
+		//文件下载 
+		  function downloadFile() {			
+			alert("downloadFile下载 word.doc");
+			mam.navigator.down.down(successCallback, errorback,url,"downloadFile/","word测试.doc", "SYS", "DOWNVIDEO");
+        }
+
+	 	function openfile()
+	 {
+		 alert("打开文件 444.doc");
+		mam.navigator.down.openByThirdPartyApp(succallback, errorcallback, "downloadFile/word测试.doc");
+	 }
+
+		 function getcallback() {
+			 alert("downloadFileByUrl    getcallback");			
+		}
+
+		function successCallback(v) {
+			alert("下载成功：" + JSON.stringify(v));				
+		}
+		function errorback(v) {
+			alert("下载下载失败：" + JSON.stringify(v));
+		}
+		function downloadFileByUrl() {
+			 alert("downloadFileByUrl下载video.wav");
+			 var type = "1";
+			mam.navigator.downloadfilebyurl.downloadFileByUrl(successCallback, errorCallback, "CC", "xwlb.mp4", type, url, getcallback);
+		 }
+
+	 function succallback(v)
+	{
+		alert("openByThirdPartyApp成功" + JSON.stringify(v));
+	}
+	function errorcallback(v)
+	{
+		alert("openByThirdPartyApp失败" + JSON.stringify(v));
+	}
+
+function checkDri()
+{
+	var device = window.device;
+
+	var devicePlatform = device.platform;
+	alert("设备消息 "+devicePlatform);
+}
+
+function getIOS()
+{
+	mam.navigator.loadconfig.getUserInfo(getUserInfoCallback);
+
+}
+function getAndroid()
+{
+	mam.navigator.loadconfig.getUserInfo(1,getUserInfoCallback);
+
+}
+//getUserInfoCallback调用回调
+function getUserInfoCallback(obj)
+{	
+	nameCode=obj.nameCode;
+	areaId = obj.areaId;
+	userId=obj.userId;
+	alert("getUserInfo插件调用成功: 统一框架登录名: "+nameCode+"节点编号: "+ areaId+"用户id: "+userId);
+}
+
+function sddownload()
+{
+	mam.navigator.down.sd_download(sdsuccess, sderrorback,'https://mam.sgcc.com.cn/html/internal/mobile.png' ,'fileName.png', '/WhiteDir/images/testImage','SYS', 'resImage');
+}
+function sdsuccess(obj)
+{
+	alert('sdsuccess2   '+obj);
+	document.getElementById("sdimage").src = "WhiteDir/testImage/fileName.png";
+}
+function sderrorback()
+{
+	alert('sderrorback');
+}
+
+function sddownloadZIP()
+{
+	mam.navigator.down.sd_download(desuccess, deerrorback,'https://mam1.ft-power.com.cn:10030/netplatform-web/category/download.do?fileid=11976&hashval=BCECA472A9413C8D45455A37D853B1B5&type=1','bcbdwjmc.zip', '/WhiteDir/testzip',  
+'SYS', 'testzipservercode');
+
+
+}
+function desuccess(obj)
+{
+	alert('sdsuccess2   '+obj);
+}
+function deerrorback()
+{
+	alert('deerrorback '+obj);
+}
+function decompression()
+{
+		mam.navigator.appfilemanage.decompression(decsuccess,deerrorback,'WhiteDir/testzip/bcbdwjmc.zip')
+
+}
+function decsuccess(obj)
+{
+	alert('decsuccessobj   '+JSON.stringify(obj));
+}
+function deerrorback(obj)
+{
+	alert('decsuccessobj   '+JSON.stringify(obj));
+}
+//**********************************************************/
+    </script>
+</head>
+<body onload="onLoad()">
+	<br>
+		<br>
+			<br>
+				<br>
+<div>
+<span>***************** SYS   SD_DOWNLOAD*******************<span><br><br>
+<input type='button' onclick="sddownload()"  value='下载图片 保存在相对路径'></input><br><br>
+<img id='sdimage'/>
+
+<span>***************** SYS   decompression*******************<span><br><br>
+<input type='button' onclick="sddownloadZIP()"  value='下载zip文件 解压 保存在相对路径'></input><br><br>
+<input type='button' onclick="decompression()"  value=' 解压ZIP 保存在相对路径'></input><br><br>
+<span>***************** SYS    *******************<span><br><br>
+  
+    <input type='button' onclick='openFileManage()' value='打开下载管理界面'></input>
+	<br>
+	<br>
+	
+	<br>
+	<!--<input type='button' onclick='fileUpload()' value='文件上传'></input>-->
+	<br>
+	<br>
+	<span>***************** SYS*******************<span><br><br>
+	<input type='button' onclick="getFileInfo('SYS')"  value='获取文件信息——实验室'></input><br><br>
+	
+	<input type='button' onclick="fileDownload('SYS',mp4,'/media','xwlb.mp4','实验室','1')" value='文件下载    MP3 文件路径 /media'></input>
+	<input type='button' onclick="fileDownload('SYS',mp4_http,'/media','xwlb.mp4','实验室','1')" value='文件下载    MP3 文件路径 /media HTTP'></input>
+	<input type='button' onclick="removefile('SYS','xwlb.mp4')" value='删除'></input><br><br>
+
+	<input type='button' onclick="fileDownload('SYS',aac,'/aac','downloadfile.mp3','实验室','0')" value='文件下载    aac 文件路径 /media'></input>
+	<input type='button' onclick="fileDownload('SYS',aac_http,'/aac','downloadfile.mp3','实验室','0')" value='文件下载    aac 文件路径 /media  HTTP'></input>
+	<input type='button' onclick="removefile('SYS','downloadfile.mp4')" value='删除'></input><br><br>
+
+
+
+	<input type='button' onclick="fileDownload('SYS',doc,'/media','094436.doc','实验室','0')" value='文件下载    doc 文件路径 /text'></input>
+	<input type='button' onclick="fileDownload('SYS',doc_http,'/media','094436.doc','实验室','0')" value='文件下载    doc 文件路径 /text  HTTP'></input>
+	<input type='button' onclick="removefile('SYS','094436.doc')" value='删除'></input><br><br>
+	<br>
+<br>
+<span>******************** SYSCS****************<span>
+<div>
+	<br>
+			<input type='button' onclick="getFileInfo('SYSCS')" value='获取文件信息——实验室测试'></input><br><br>
+
+	<input type='button' onclick="fileDownload('SYSCS',mp4,'/mediaCS','xwlb.mp4','实验室(测试)','0')" value='文件下载    MP3 文件路径 /media'></input>
+	<input type='button' onclick="removefile('SYSCS','xwlb.mp4')" value='删除'></input><br><br>
+
+	<input type='button' onclick="fileDownload('SYSCS',aac,'/aacCS','downloadfile.mp3','实验室(测试)','1')" value='文件下载    aac 文件路径 /media'></input>
+	<input type='button' onclick="removefile('SYSCS','downloadfile.mp3')" value='删除'></input><br><br>
+
+	<input type='button' onclick="fileDownload('SYSCS',doc,'/docCS','094436.doc','实验室(测试)','0')" value='文件下载    doc 文件路径 /text'></input>
+	<input type='button' onclick="removefile('SYSCS','094436.doc')" value='删除'></input><br><br>
+
+	<br>
+	<br>
+<br>
+
+
+
+
+
+<span>****************old********************<span>
+  
+
+<br>
+	<input type='button' onclick='downloadFile()' value='下载文件'></input>	   
+    <input type='button' onclick='openfile()' value='打开文件'></input>
+<br>
+<br>
+	<input type='button' onclick='downloadFileByUrl()' value='downloadFileByUrl（需测试）'></input>
+
+<br>
+<br>
+<span>************************************
+<br>
+	 <input type='button' onclick='checkDri()' value='查看设备系统'></input>
+	 <input type='button' onclick='getIOS()' value='IOS获取用户信息getUserInfo'></input>
+	 <input type='button' onclick='getAndroid()' value='Android获取用户信息getUserInfo'></input>
+
+
+</div>
+</body>
+</html>
+
+
+

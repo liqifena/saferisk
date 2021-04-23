@@ -1,0 +1,60 @@
+<html>
+<head>
+	<script type ="text/javascript" src="js/jquery.js"></script>
+
+</head>
+<body>
+<script>   
+    $(function() {    
+	    $("input[type='button']").bind("click", function() {  
+
+	 	$.ajax({
+	  			type:"post",
+	  			url:"http://localhost:8080/epriWPPV/reqAction.action",
+	  			success:function(d){	
+		  				var ret = eval("("+d+")");//JSON.parse(d);
+						var ret1 = ret._ajax_op_flag;
+						if(ret1=="success"){
+						   var list=ret.list;
+						   var select2=$("#select2");
+						   var option="";
+						   if(list.length>0)
+						   {
+							   $.each(list,function(i,n){
+							   		if(i==0)
+							   		{
+							   			option += "<option value='"+n.AREA_CODE+"' selected>"+n.AREA_NAME+"</option>";
+							   			initDCCombobox(n.AREA_CODE);
+							   		}
+							   		else
+							   		{
+						     	 		option += "<option value='"+n.AREA_CODE+"'>"+n.AREA_NAME+"</option>";
+						     	 	}
+						  		});
+						  	}
+						  	select2.append(option); 
+						}
+						else
+						{
+							option += "<option value=''>---请选择---</option>";
+						}
+				  },
+				  error:function(){
+	  				alert("数据异常!");
+	  			  }
+	  		});
+			
+	     }); 
+    });  
+
+      
+</script>   
+
+
+	<input type="text" name="username"/>
+	<input type="text" name="age"/>
+	<input type="button" value="Ajax请求" />  
+
+
+</body>
+</html>

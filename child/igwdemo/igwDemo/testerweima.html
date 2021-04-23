@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>测试页（何）</title>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+
+	</head>
+
+	<body onload="onLoad()">
+		<input type="button" id="" value="拍照并显示" onclick="takePhoto()" />
+		<input type="button" id="" value="上传" onclick="uploadFile()" />
+		<input type="button" id="" value="扫描二维码" onclick="executeGoToScanPager()" />
+		<img id="m-photo" src="" style="width: 100%;display: none;" />
+		<p id="m-photo-url"></p>
+
+		<script type="text/javascript">
+			var ready = false;
+			function onLoad(){     
+				document.addEventListener("deviceready", onDeviceReady, false);
+			}
+
+			function onDeviceReady() {    
+				//设定标志位，到扫描二维码界面时用到这个标志位
+				ready = true;		
+			}
+
+			function takePhoto() {
+				if (!deviceReady) {
+					//执行到这边表示cordova环境没有准备好
+					return;
+				}
+				//使用这边调用可以获取图像URL[和下面的只能调用一个方法]
+				navigator.camera.getPicture(onSuccess, onError, getCameraOptions());
+			}
+
+			function getCameraOptions() {
+				var cameraOptions = {
+					quality: 50,
+					destinationType: navigator.camera.DestinationType.FILE_URI,
+					sourceType: navigator.camera.PictureSourceType.CAMERA,
+					targetWidth: 0,
+					targetHeight: 0,
+					//allowEdit : true,
+					encodingType: Camera.EncodingType.JPEG,
+					saveToPhotoAlbum: true
+				};
+				return cameraOptions;
+			}
+
+			function onSuccess(imageURI) {
+				alert("onSuccess() imageURI:" + imageURI);
+				//从这边返回数据
+				$("#m-photo").attr("src", imageURI);
+				$("#m-photo").css("display", "block");
+				$("#m-photo-url").html(imageURI);
+			}
+			//参数为string类型
+			function onError(cameraError) {
+				alert(cameraError);
+			}
+			// 上传文件到服务器
+			function uploadFile() {
+				alert($("#m-photo-url").html());
+				var ft = new FileTransfer();
+				alert("FileTransfer");
+				var path = $("#m-photo-url").html();
+				var name = "hmx";
+				ft.upload(path, "http://123.57.25.126/pms7.1_cvs/rest/setDGDWJHZP",
+					function(result) {
+						alert('Upload success: ' + result.responseCode);
+						alert(result.bytesSent + ' bytes sent');
+					},
+					function(error) {
+						alert('Error uploading file ' + path + ': ' + error.code);
+					}, {
+						fileName: name
+					});
+			}			
+
+
+			//到扫描界面
+	function executeGoToScanPager(){
+    	console.log("executeGoToScanPager()-->start");
+    	if(!ready){
+    		console.log("Cordova is not ready,return");
+    		return;
+    	}
+		//获取平台信息[需要把这边获取的平台信息发送到服务器]
+    	var devicePlatform = device.platform;
+		document.getElementById("list").innerHTML = "";
+    	//执行到这边表示cordova环境准备完成,在二维码扫描界面
+    	mam.navigator.forward.goToScanTwoDiemCode(successCallback,errorCallback);
+    	//执行成功回调
+    	//这边参数表示扫描成功后返回的字符串
+    	function successCallback(msg){    		
+			alert("11");
+    		document.getElementById('textarea').value = msg;
+       }    	
+    	//执行失败回调[扫描失败，暂不退出界面未做处理]
+    	function errorCallback(msg){
+    		alert("11");
+			document.getElementById("list").innerHTML = "";
+    	} 
+    }
+		</script>
+	</body>
+
+</html>
