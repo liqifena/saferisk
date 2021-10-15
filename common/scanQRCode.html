@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../css/app.css" />
+		<!--<link rel="stylesheet" type="text/css" href="../css/mui.picker.min.css" />-->
+		<style>
+			.mui-btn {
+				font-size: 16px;
+				padding: 8px;
+				margin: 3px;
+			}
+			h5.mui-content-padded {
+				margin-left: 3px;
+				margin-top: 20px !important;
+			}
+			h5.mui-content-padded:first-child {
+				margin-top: 12px !important;
+			}
+			.ui-alert {
+				text-align: center;
+				padding: 20px 10px;
+				font-size: 16px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">scanQRCode（扫一扫）</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-content-padded">
+				<h5 class="mui-content-padded">示例</h5>
+				<button id='oepn' class="mui-btn mui-btn-block" type='button'>打开扫一扫</button>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+
+		<script src="../wx/uap.js"></script>
+		<script>
+			uap.ready(function(){
+				//页面加载完的直接调用的方法
+
+
+			})
+
+
+			mui('.mui-content').on('click','#oepn',function(){
+				
+				wx.scanQRCode({
+    desc: 'scanQRCode desc',
+    needResult: 0, // 默认为0，扫描结果由企业微信处理，1则直接返回扫描结果，
+    scanType: ["qrCode", "barCode"], // 可以指定扫二维码还是一维码，默认二者都有
+    success: function(res) {
+        // 回调
+    },
+    error: function(res) {
+        if (res.errMsg.indexOf('function_not_exist') > 0) {
+            alert('版本过低请升级')
+        }
+    }
+});
+
+				
+			})
+		</script>
+	</body>
+
+</html>

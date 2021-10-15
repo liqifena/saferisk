@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="../css/app.css" />
+		<!--<link rel="stylesheet" type="text/css" href="../css/mui.picker.min.css" />-->
+		<style>
+			.mui-btn {
+				font-size: 16px;
+				padding: 8px;
+				margin: 3px;
+			}
+			h5.mui-content-padded {
+				margin-left: 3px;
+				margin-top: 20px !important;
+			}
+			h5.mui-content-padded:first-child {
+				margin-top: 12px !important;
+			}
+			.ui-alert {
+				text-align: center;
+				padding: 20px 10px;
+				font-size: 16px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">openUrl（打开新窗口）</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-content-padded">
+				<h5 class="mui-content-padded">示例</h5>
+				<button id='oepn' class="mui-btn mui-btn-block" type='button'>新窗口打开页面</button>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+
+		<script src="../wx/uap.js"></script>
+		<script>
+			uap.ready(function(){
+				//页面加载完的直接调用的方法
+
+
+			})
+
+
+			mui('.mui-content').on('click','#oepn',function(){
+				
+				wx.invoke('openUrl', {
+					"type": 0, //0或不填表示使用内部浏览器新窗口打开，1表示用系统浏览器打开
+					"url": "http://www.qq.com", //url地址
+					}, function(res){
+						if (res.err_msg != "openUrl:ok") {
+							//错误处理
+						}
+				});
+
+				
+			})
+		</script>
+	</body>
+
+</html>

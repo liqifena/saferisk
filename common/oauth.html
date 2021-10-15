@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+  <title></title>
+  <!--标准mui.css-->
+  <link rel="stylesheet" href="../css/mui.min.css">
+  <!--App自定义的css-->
+  <link rel="stylesheet" type="text/css" href="../css/app.css" />
+  <!--<link rel="stylesheet" type="text/css" href="../css/mui.picker.min.css" />-->
+  <style>
+    .mui-btn {
+      font-size: 16px;
+      padding: 8px;
+      margin: 3px;
+    }
+
+    h5.mui-content-padded {
+      margin-left: 3px;
+      margin-top: 20px !important;
+    }
+
+    h5.mui-content-padded:first-child {
+      margin-top: 12px !important;
+    }
+
+    .ui-alert {
+      text-align: center;
+      padding: 20px 10px;
+      font-size: 16px;
+    }
+
+    .mui-content-padded span {
+      word-wrap: break-word;
+      word-break: break-all;
+      white-space: normal;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="mui-bar mui-bar-nav">
+    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+    <h1 class="mui-title">OAuth的授权登录</h1>
+  </header>
+  <div class="mui-content">
+    <div class="mui-content-padded">
+      <h5 class="mui-content-padded">示例</h5>
+      <button id='getCode' class="mui-btn mui-btn-block" type='button'>获取code</button>
+      <h5 class="mui-content-padded">code:<br /><span id="code"></span></h5>
+
+      <button id='getIscToken' class="mui-btn mui-btn-block" type='button'>获取ticket</button>
+      <h5 class="mui-content-padded">IscToken:<br /><span id="IscToken"></span>
+ 
+      </h5>
+
+      <button id='getuserinfo' class="mui-btn mui-btn-block" type='button'>getuserinfo</button>
+      <h5 class="mui-content-padded">getuserinfo:<br /><span id="userInfo"></span>
+ 
+      </h5>
+ 
+
+    </div>
+  </div>
+  <script src="../js/mui.min.js"></script>
+
+  <script src="../wx/uap.js"></script>
+  <script src="oauth.js"></script>
+  <script>
+    uap.ready(function () {
+      //页面加载完的直接调用的方法
+      console.log("----------------------------");
+      if (wx_code) {
+        mui('#code')[0].innerHTML = wx_code;
+      } else {
+        // getWxCode();
+      }
+    })
+
+
+    mui('.mui-content').on('click', '#getCode', function () {
+
+      getWxCode();
+
+    })
+
+    mui('.mui-content').on('click', '#getIscToken', function () {
+
+      getIscToken();
+
+    })
+
+    mui('.mui-content').on('click', '#getuserinfo', function () {
+
+      getuserinfo();
+
+    })
+
+ 
+  </script>
+</body>
+
+</html>
