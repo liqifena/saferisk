@@ -1,1 +1,82 @@
-<!DOCTYPE html><html><head><meta charset=utf-8><meta name=apple-mobile-web-app-capable content=yes><meta name=apple-mobile-web-app-status-bar-style content=black><meta name=format-detection content="telephone=no"><meta http-equiv=X-UA-Compatible content="IE=edge"><title>construction-app</title><link href=./static/css/app.04f945b53dcac0ea11ee132b7b4713b7.css rel=stylesheet></head><body><div id=app></div><script type=text/javascript src=./static/js/vendor.2f99e776c4511d86eeab.js></script><script type=text/javascript src=./static/js/app.6f1bc9a1188edcda7ac1.js></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://webapi.amap.com/js/marker.js"></script>
+  <script src="https://webapi.amap.com/maps?v=1.4.15&key=a8e3f1d526511281bac2edf977a6ca03&plugin=AMap.Geolocation">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/2.4.1/eruda.min.js"></script>
+  <script>eruda.init();</script>
+  <style>
+    html, body, #container {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+  <script>
+    class InitMap {
+      constructor() {
+        this.map = null
+        this.marker = null
+        this.init()
+      }
+      init() {
+        this.map = new AMap.Map('container', {
+          zoom: 16, //级别
+          dragEnable: true,
+          zoomEnable: true,
+          doubleClickZoom: true,
+          touchZoom: true
+        });
+        this.getLocation()
+      }
+      getLocation() {
+        // 获取定位
+        this.map.plugin('AMap.Geolocation', () => {
+          let geolocation = new AMap.Geolocation({
+            zoomToAccuracy: true,
+            buttonPosition: 'RB'
+          })
+          this.map.addControl(geolocation);
+          geolocation.getCurrentPosition();
+          AMap.event.addListener(geolocation, 'complete', onComplete); //返回定位信息
+          AMap.event.addListener(geolocation, 'error', onError); //返回定位出错信息
+          const _this = this
+          function onComplete(data) {
+            // this.addressInfo = data["addressComponent"]
+            let lat = data.position.getLat()
+            let lng = data.position.getLng()
+            console.log(lng, lat);
+            _this.addMarker(lng, lat)
+            alert(`经度为: ${lng}, 维度为: ${lat}`);
+          }
+
+          function onError(data) {
+            console.log(data)
+            alert('定位失败请刷新再试');
+          }
+        })
+      }
+      // 设置标记点
+      addMarker(lng, lat) {
+        // 标记点
+        this.marker = new AMap.Marker({
+          position: [lng, lat] //位置
+        })
+        this.map.add(this.marker); //添加到地图
+
+      }
+    }
+    const map = new InitMap()
+  </script>
+</body>
+
+</html>
